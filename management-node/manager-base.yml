@@ -1,0 +1,69 @@
+- hosts: all
+  environment:
+    PLACEHOLDER_VAR: "foobar"
+  vars:
+    # Replace with ansible_user in ansible 2.0
+    user: "{{ ansible_ssh_user }}"
+    home_dir: "/home/{{ user }}"
+
+    security_ssh_port: 22
+
+    # for tersmitten.autossh-tunnel-server
+    autossh_tunnel_server_authorized_keys:
+      #- src: "/home/autossh/.ssh/authorized_keys"
+      - src: "./files/autossh_id_rsa.pub"
+
+  # for Ansible < 1.9
+  # sudo: yes
+  become: yes
+  #become_user: su
+  roles:
+    - geerlingguy.security
+    - tersmitten.autossh-tunnel-server
+
+  tasks:
+    - name: Install htop
+      apt: pkg=htop state=installed
+
+    - name: Install git
+      apt: pkg=git state=installed
+
+    - name: Install ansible
+      apt: pkg=ansible state=installed
+
+    - name: Install python-dev
+      apt: pkg=python-dev state=installed
+
+    - name: Install pip
+      apt: pkg=python-pip state=installed
+
+    - name: Create file copy destination on remote
+      file: path=./files state=directory mode=0755
+
+    - name: add users 
+      user: "name={{item|quote}} shell=/bin/bash"
+      with_items: "{{github_usernames_with_access}}"
+
+    - name: add users with sudo access
+      user: "name={{item|quote}} group=sudo shell=/bin/bash" # use "admin" for Ubuntu <11.10, and "sudo" for later
+      with_items: "{{github_usernames_with_sudo_access}}"
+
+    - name: add ssh keys for users from GitHub
+      authorized_key: "user={{item|quote}} key=https://github.com/{{item}}.keys"
+      with_items: "{{github_usernames_with_access}}"
+
+    - name: add ssh keys for sudo users from GitHub
+      authorized_key: "user={{item|quote}} key=https://github.com/{{item}}.keys"
+      with_items: "{{github_usernames_with_sudo_access}}"
+
+    - name: Copy in password clearing script
+      template: 
+        src: "../files/clear_and_expire_password.sh" 
+        dest: "./files/clear_and_expire_password.sh"
+        mode: "0744"
+
+    - name: Clear and expire passwords so sudoers are promped at first (key-based) login
+      command: "./files/clear_and_expire_password.sh {{item}}"
+      with_items: "{{github_usernames_with_sudo_access}}"
+
+

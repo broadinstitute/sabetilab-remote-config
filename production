@@ -1,0 +1,9 @@
+[managers]
+manager.sabeti-aws.net
+
+[nodes]
+node-1.sabeti-aws.net ssh_port=6112 ssh_tunnel_port=32001
+node-2.sabeti-aws.net ssh_port=6112 ssh_tunnel_port=32002
+node-3.sabeti-aws.net ssh_port=6112 ssh_tunnel_port=32003
+node-4.sabeti-aws.net ssh_port=6112 ssh_tunnel_port=32004
+node-5.sabeti-aws.net ssh_port=6112 ssh_tunnel_port=32005

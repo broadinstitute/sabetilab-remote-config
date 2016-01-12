@@ -1,0 +1,22 @@
+language: python
+python: '2.7'
+sudo: required
+addons:
+  apt:
+    sources:
+      - python-apt
+      - python-pycurl
+before_install:
+  - sudo apt-get update -qq
+install:
+  - pip install --upgrade pip
+  - pip install ansible netaddr
+  # Add ansible.cfg to pick up roles path.
+  #- "printf '[defaults]\nroles_path = ../' > ansible.cfg"
+env:
+  global:
+    - TEST_ANSIBLE_HOSTNAME: localhost
+      TEST_ANSIBLE_CONNECTION: local
+script:
+  - ansible-playbook --syntax-check -i test/inventory test/playbook.yml
+  - ansible-playbook -i test/inventory test/playbook.yml --connection=local --sudo -vvvv
