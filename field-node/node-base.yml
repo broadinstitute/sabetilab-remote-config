@@ -5,8 +5,9 @@
 
   vars:
     security_ssh_port: "{{ ssh_port }}"
+    autossh_tunnel_client_identity: autossh_id_rsa
     autossh_tunnel_client_key_map:
-      - src: "./files/autossh_id_rsa"
+      - src: "./files/{{autossh_tunnel_client_identity}}"
     autossh_tunnel_client_host: "{{ manager_domain_name }}"
     autossh_tunnel_client_forward: '{{ ssh_tunnel_port }}:127.0.0.1:{{ ssh_port }}'
 
@@ -38,34 +39,34 @@
 
     - name: Copy python dependency file 
       copy: 
-        src:"./files/requirements.txt" 
-        dest:"./files/python-requirements.txt mode=0644
+        src: ./files/requirements.txt
+        dest: ./files/python-requirements.txt 
+        mode: 0644
 
     - name: Install python dependencies
-      pip: 
-        requirements:"./files/python-requirements.txt"
+      pip: requirements=./files/python-requirements.txt
 
     - name: Copy in Route53 update script (as template)
       template: 
-        src: "./files/update_route53.py.j2" 
-        dest: "./files/update_route53.py" 
-        mode: "0744"
+        src: ./files/update_route53.py.j2
+        dest: ./files/update_route53.py
+        mode: 0744
 
     - name: setup cron job to update Route53 on reboot
       cron: 
-        name: "update route53 (on reboot)"
-        special_time: "reboot"
-        job: "./files/update_route53.py"
+        name: update route53 (on reboot)
+        special_time: reboot
+        job: ./files/update_route53.py
 
     - name: setup cron job to update Route53 every half-hour
       cron: 
-        name: "update route53"
-        minute:"5,35" 
-        job: "./files/update_route53.py"
+        name: update route53
+        minute: 5,35
+        job: ./files/update_route53.py
 
     - name: update the AWS Route53 subdomain for this node (hostname) upon ansible setup
-      route53:
-        aws_access_key: "{{ aws_access_key_id }}"
+      route53: 
+        aws_access_key: "{{ aws_access_key_id }}" 
         aws_secret_key: "{{ aws_secret_access_key }}"
         command: create
         overwrite: yes
@@ -105,5 +106,5 @@
     - name: setup cron job to call ansible-pull every hour
       cron: 
         name: "update route53"
-        minute:"5"
+        minute: "5"
         job: "ansible-pull -i ./production ./field-node/base_playbook.yml"
