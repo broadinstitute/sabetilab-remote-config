@@ -4,7 +4,7 @@ Documentation=man:autossh(1)
 After=network-online.target
 
 [Service]
-Type=forking
+Type=simple
 PIDFile={{ autossh_tunnel_client_autossh_pidfile }}
 
 Restart=on-failure
