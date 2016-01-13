@@ -19,4 +19,6 @@ env:
       TEST_ANSIBLE_CONNECTION: local
 script:
   - ansible-playbook --syntax-check -i test/inventory test/playbook.yml
-  - ansible-playbook -i test/inventory test/playbook.yml --connection=local --sudo -vvvv
+  - ansible-playbook --syntax-check -i test/inventory management-node/node-base.yml
+  - ansible-playbook --syntax-check -i test/inventory field-node/manager-base.yml
+  #- ansible-playbook -i test/inventory test/playbook.yml --connection=local --sudo -vvvv
