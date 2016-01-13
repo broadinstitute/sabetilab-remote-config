@@ -41,17 +41,17 @@ Clone this repository from GitHub to your machine.
 
 `git clone https://github.com/broadinstitute/sabetilab-remote-config.git`
 
-Generate the ssh keys used for the reverse tunnel manager<-field-node, and the GitHub deployment key:
+Generate the ssh keys used for the reverse tunnel, manager⃪field_node, and the GitHub deployment key:
 
 `./initial_keygen.sh`
 
-Enter the GitHub private key (`./files/github_deploy_read_only_id_rsa`) into the deployment keys section of this repository on GitHub, with Read Only permissions.
+Enter the GitHub public key (`./files/github_deploy_read_only_id_rsa.pub`) into the deployment keys section of this repository on GitHub, with Read Only permissions.
 
 Create an AWS IAM user with EC2 and Route53 permissions, save the credentials.
 
-Create a Route53 A record for the subdomain to be used for the management node (vagrant-aws-route53 can update the record but not create it).  The name `manager` is suggested.
+Create a Route53 A record for the subdomain to be used for the management node (vagrant-aws-route53 can update the record but not create it).  The name `manager` is suggested. This record can be created via the AWS web console.
 
-Create an SSH key pair for accessing EC2 instances, copying the *.pem file to a known location, and change its permissions: `chmod 400`
+Create an AWS SSH key pair for accessing EC2 instances, copying the *.pem file to a known location (`~/.ssh/` is suggested), and change its permissions: `chmod 600` This key can be created via the AWS web console.
 
 Ensure the default EC2 security group permits inbound SSH connections on ports {22,6112} from anywhere.
 
@@ -60,7 +60,7 @@ Create a new `settings_field_node.yml` in this directory, based on `settings_fie
 
 Set the values specified in `settings_manager.yml` and `settings_field_node.yml`.
 
-**Note:** If you do not have any public key pairs associated with yout GitHub account, you will need to generate a new pair and add the public key, as described here. This will allow you to authenticate directly into the management noe and the field nodes, as long as the private key is present and configured in `~/.ssh/`.
+**Note:** If you do not have any public key pairs associated with yout GitHub account, you will need to generate a new pair and add the public key, as [described here](https://help.github.com/articles/generating-ssh-keys/), and [add it to your GitHub profile](https://github.com/settings/ssh). This will allow you to authenticate directly into the management noe and the field nodes, as long as the private key is present and configured in `~/.ssh/`.
 
 ### Set up the manager
 
@@ -68,10 +68,13 @@ From the local machine, deploy the manager by calling:
 
 `./setup-manager.sh`
 
+This helper script will use Vagrant to spin up an EC2 instances which will then be configured via Ansible. It will also update the Route53 `A` record for the manager to have the correct IP address for the instance.
+
 ### Set up the field nodes
 
-The field nodes should be running Ubuntu 15.10 or later. Install this operating system and pick a hostname. The hostname will become the subdomain automatically given to the field node.
-Using a USB thumbdrive or similar, copy the entire local checkout to each field node.
+The field nodes should be running Ubuntu 15.10 or later. Install the operating system and pick a hostname. The hostname will become the subdomain automatically given to the field node, and should match an entry found in the inventory file, `production`.
+
+Using a USB thumbdrive or similar, copy the entire local checkout of this repo to each field node.
  
 On each field node, run:
 
