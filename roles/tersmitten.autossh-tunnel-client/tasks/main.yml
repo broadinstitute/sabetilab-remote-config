@@ -41,10 +41,24 @@
     - autossh-tunnel-client-configuration
     - autossh-tunnel-client-configuration-keys
 
-- name: create init script
+- name: create init script (upstart)
   template:
     src: etc/init/autossh-tunnel-client.conf.j2
     dest: /etc/init/autossh-tunnel-client.conf
+    owner: root
+    group: root
+    mode: 0644
+  notify: restart autossh-tunnel-client
+  tags:
+    - configuration
+    - autossh-tunnel-client
+    - autossh-tunnel-client-configuration
+    - autossh-tunnel-client-configuration-init
+
+- name: create init script (systemd)
+  template:
+    src: etc/systemd/system/autossh-tunnel-client.service.j2
+    dest: /etc/systemd/system/autossh-tunnel-client.service
     owner: root
     group: root
     mode: 0644
