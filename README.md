@@ -41,7 +41,7 @@ Clone this repository from GitHub to your machine.
 
 `git clone https://github.com/broadinstitute/sabetilab-remote-config.git`
 
-Generate the ssh keys used for the reverse tunnel, manager from ield_node, and the GitHub deployment key:
+Generate the ssh keys used for the reverse tunnel, manager from field node, and the GitHub deployment key:
 
 `./initial_keygen.sh`
 
