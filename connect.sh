@@ -7,8 +7,12 @@ if [ "$#" -ne 1 ]; then
     exit 1
 fi
 
+SCRIPT_DIRECTORY=$(dirname $0)
+
 DOMAIN=$1
-RELAY_DOMAIN="manager.sabeti-aws.net"
+#RELAY_DOMAIN=""
+
+RELAY_DOMAIN=$(cat $SCRIPT_DIRECTORY/settings_field_node.yml | grep "manager_domain_name" | perl -lape 's/(.*):\s*(\S*)/$2/g')
 
 # get the IP of the manager node
 # use the AWS nameserver to ensure most current DNS records

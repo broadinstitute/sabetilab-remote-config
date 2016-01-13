@@ -58,6 +58,9 @@ target/
 # Vagrant
 .vagrant
 
-*settings.yml
+*settings*.yml
 
 *.pem
+
+*id_rsa*
+

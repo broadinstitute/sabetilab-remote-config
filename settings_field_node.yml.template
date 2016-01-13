@@ -1,0 +1,13 @@
+deploy_repo_url: "https://github.com/broadinstitute/sabetilab-remote-config"
+deploy_ssh_private_key: "../keys/github_deploy_read_only_id_rsa"
+# these credentials should only have permission make changes to route53
+# via the IAM policy "AmazonRoute53FullAccess"
+aws_access_key_id: MYACCESSKEYID
+aws_secret_access_key: mysecretacceskey
+aws_hosted_zone_id: SOMEZONEIF
+domain_name: example.net
+manager_domain_name: manager.example.net
+github_usernames_with_access: []
+github_usernames_with_sudo_access: 
+  - ""
+  - ""

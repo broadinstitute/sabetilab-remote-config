@@ -7,12 +7,12 @@
     security_ssh_port: "{{ ssh_port }}"
     autossh_tunnel_client_identity: autossh_id_rsa
     autossh_tunnel_client_key_map:
-      - src: "./files/{{autossh_tunnel_client_identity}}"
+      - src: "../keys/{{autossh_tunnel_client_identity}}"
     autossh_tunnel_client_host: "{{ manager_domain_name }}"
     autossh_tunnel_client_forward: '{{ ssh_tunnel_port }}:127.0.0.1:{{ ssh_port }}'
 
   vars_files:
-    - "./settings.yml"
+    - "../settings_field_node.yml"
 
   roles:
     - geerlingguy.security
@@ -84,6 +84,20 @@
       authorized_key: "user={{item|quote}} key=https://github.com/{{item}}.keys"
       with_items: "{{github_usernames_with_sudo_access}}"
 
+    - name: Ensure .ssh directory exists.
+      file: 
+        dest: "/home/ubuntu/.ssh"
+        mode: 0700 
+        owner: ubuntu
+        state: directory
+
+    - name: Install deployment ssh key
+      copy: 
+        content: "{{ deploy_ssh_private_key }}" 
+        dest: "/home/ubuntu/.ssh/id_rsa"
+        mode: 0600
+        owner: ubuntu
+
     - name: Copy in password clearing script
       template: 
         src: "../files/clear_and_expire_password.sh" 
@@ -98,4 +112,5 @@
     #  cron: 
     #    name: "update route53"
     #    minute: "5"
-    #    job: "ansible-pull -i ./production ./field-node/base_playbook.yml"
+    #    user: ubuntu
+    #    job: "ansible-pull -U {{deploy_repo_url}} -i ./production ./field-node/base_playbook.yml"

@@ -10,8 +10,7 @@
 
     # for tersmitten.autossh-tunnel-server
     autossh_tunnel_server_authorized_keys:
-      #- src: "/home/autossh/.ssh/authorized_keys"
-      - src: "./files/autossh_id_rsa.pub"
+      - src: "../keys/autossh_id_rsa.pub"
 
   # for Ansible < 1.9
   # sudo: yes
