@@ -41,13 +41,13 @@ Clone this repository from GitHub to your machine.
 
 `git clone https://github.com/broadinstitute/sabetilab-remote-config.git`
 
-Generate the ssh keys used for the reverse tunnel, manager⃪field_node, and the GitHub deployment key:
+Generate the ssh keys used for the reverse tunnel, manager from ield_node, and the GitHub deployment key:
 
 `./initial_keygen.sh`
 
 Enter the GitHub public key (`./files/github_deploy_read_only_id_rsa.pub`) into the deployment keys section of this repository on GitHub, with Read Only permissions.
 
-Create an AWS IAM user with EC2 and Route53 permissions, save the credentials.
+Create an AWS IAM user with EC2 and Route53 permissions, save the credentials. Use the key and secret in configuring `settings_manager.yml`. Create a second set of AWS credentials with only Route53 permissions, and use the values in configuring `settings_field_node.yml`.
 
 Create a Route53 A record for the subdomain to be used for the management node (vagrant-aws-route53 can update the record but not create it).  The name `manager` is suggested. This record can be created via the AWS web console.
 
@@ -78,7 +78,7 @@ Using a USB thumbdrive or similar, copy the entire local checkout of this repo t
  
 On each field node, run:
 
-`./setup-field-node_local.sh`
+`./setup_field_node_local.sh`
 
 ## Making changes
 
@@ -88,9 +88,29 @@ To apply changes to the management node, it must be reprovisioned:
 
 `vagrant provision`
 
-An EC2 instance for the management node will be created. The IP address will be assigned to the subdomain of the domain name specified in `settings.yml`.
+An EC2 instance for the management node will be created. The IP address will be updated on the domain record for the subdomain of the domain name specified in `settings_manager.yml`.
+
+### field node
+
+TODO
 
 ## Connecting to nodes
+
+```
+                                            ┌─┐                      
+                                            │ │                      
+                                            │ │                      
+┌─────────────┐        ┌─────────────┐      │ │       ┌─────────────┐
+│    local    │        │    relay    │      │ │       │   remote    │
+│   machine   │◀──────▶│   machine   │◀─────┼─┼───────│   machine   │
+└─────────────┘        └─────────────┘      │ │       └─────────────┘
+                                            │ │                      
+                                            │ │                      
+                                            │ │                      
+                                            │ │                      
+                                            └─┘                      
+                                       NAT/firewall                  
+```
 
 ### management node
 
