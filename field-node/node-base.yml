@@ -32,50 +32,41 @@
       apt: pkg=python-dev state=installed
 
     - name: Install pip
-      apt: pkg=python-pip state=installed
+      easy_install: name=pip
 
     - name: Create file copy destination on remote
-      file: path=./files state=directory mode=0755
+      file: path=/opt/field-node state=directory mode=0755
 
     - name: Copy python dependency file 
       copy: 
-        src: ./files/requirements.txt
-        dest: ./files/python-requirements.txt 
-        mode: 0644
+        src: "./files/requirements.txt"
+        dest: "/opt/field-node/python-requirements.txt"
+        mode: "0744"
 
     - name: Install python dependencies
-      pip: requirements=./files/python-requirements.txt
+      pip: 
+        requirements: "/opt/field-node/python-requirements.txt"
 
     - name: Copy in Route53 update script (as template)
       template: 
-        src: ./files/update_route53.py.j2
-        dest: ./files/update_route53.py
-        mode: 0744
+        src: "./files/update_route53.py.j2"
+        dest: "/opt/field-node/update_route53.py"
+        mode: "0744"
 
     - name: setup cron job to update Route53 on reboot
       cron: 
-        name: update route53 (on reboot)
+        name: "update route53 (on reboot)"
         special_time: reboot
-        job: ./files/update_route53.py
+        job: "/opt/field-node/update_route53.py"
 
     - name: setup cron job to update Route53 every half-hour
       cron: 
         name: update route53
-        minute: 5,35
-        job: ./files/update_route53.py
+        minute: "5,35"
+        job: "/opt/field-node/update_route53.py"
 
-    - name: update the AWS Route53 subdomain for this node (hostname) upon ansible setup
-      route53: 
-        aws_access_key: "{{ aws_access_key_id }}" 
-        aws_secret_key: "{{ aws_secret_access_key }}"
-        command: create
-        overwrite: yes
-        zone: "{{ domain_name }}"
-        hosted_zone_id: "{{ aws_hosted_zone_id }}"
-        record: "{{ ansible_nodename }}.{{ domain_name }}"
-        type: A
-        ttl: 7200
-        value: "{{ ansible_eth0.ipv4.address }}"
+    - name: Update Route53 zone record for this node
+      command: "/opt/field-node/update_route53.py"
 
     - name: add users 
       user: "name={{item|quote}} shell=/bin/bash"
@@ -96,15 +87,15 @@
     - name: Copy in password clearing script
       template: 
         src: "../files/clear_and_expire_password.sh" 
-        dest: "./files/clear_and_expire_password.sh"
+        dest: "/opt/field-node/clear_and_expire_password.sh"
         mode: "0744"
 
     - name: Clear and expire passwords so sudoers are promped at first (key-based) login
-      command: "./files/clear_and_expire_password.sh {{item}}"
+      command: "/opt/field-node/clear_and_expire_password.sh {{item}}"
       with_items: "{{github_usernames_with_sudo_access}}"
 
-    - name: setup cron job to call ansible-pull every hour
-      cron: 
-        name: "update route53"
-        minute: "5"
-        job: "ansible-pull -i ./production ./field-node/base_playbook.yml"
+    #- name: setup cron job to call ansible-pull every hour
+    #  cron: 
+    #    name: "update route53"
+    #    minute: "5"
+    #    job: "ansible-pull -i ./production ./field-node/base_playbook.yml"
