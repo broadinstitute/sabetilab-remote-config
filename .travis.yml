@@ -13,6 +13,8 @@ install:
   - pip install ansible netaddr
   # Add ansible.cfg to pick up roles path.
   #- "printf '[defaults]\nroles_path = ../' > ansible.cfg"
+  - cp settings_field_node.yml.template settings_field_node.yml
+  - cp settings_manager.yml.template settings_manager.yml
 env:
   global:
     - TEST_ANSIBLE_HOSTNAME: localhost
