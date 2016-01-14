@@ -78,7 +78,7 @@ Using a USB thumbdrive or similar, copy the entire local checkout of this repo t
  
 On each field node, run:
 
-`./setup_field_node_local.sh`
+`sudo ./setup_field_node_local.sh`
 
 ## Making changes
 
