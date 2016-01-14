@@ -21,6 +21,9 @@
     - tersmitten.autossh-tunnel-server
 
   tasks:
+    - name: set hostname
+      hostname: name=manager
+
     - name: Install htop
       apt: pkg=htop state=installed
 
