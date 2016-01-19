@@ -68,4 +68,31 @@
       command: "./files/clear_and_expire_password.sh {{item}}"
       with_items: "{{github_usernames_with_sudo_access}}"
 
+    - name: "Configure resolvconf to search domain_name from settings"
+      sudo: yes
+      lineinfile: "dest=/etc/resolvconf/resolv.conf.d/base line='search {{domain_name}}'"
+
+    - name: Update resolvconf
+      sudo: yes
+      command: resolvconf -u
+
+    - name: "Add subdomain from settings to /etc/hosts"
+      lineinfile: 
+        dest: "/etc/hosts" 
+        regexp: '^127\.0\.1\.1' 
+        line: '127.0.1.1 {{subdomain_name}}.{{domain_name}} {{subdomain_name}}' 
+        owner: root 
+        group: root 
+        mode: 0644
+
+    - name: "Add subdomain from settings to /etc/resolvconf/resolv.conf.d/base"
+      lineinfile: 
+        dest: "/etc/hosts" 
+        regexp: '^search {{domain_name}}' 
+        line: 'search {{domain_name}}' 
+        owner: root 
+        group: root 
+        mode: 0644
+
+
 

@@ -2,8 +2,8 @@
 
 set -e -o pipefail
 
-if [ "$#" -ne 1 ]; then
-    echo "Usage: $(basename $0) subdomain.domain.tld"
+if [[ "$#" -ne 1 && "$#" -ne 2 ]]; then
+    echo "Usage: $(basename $0) subdomain.domain.tld [github_username]"
     exit 1
 fi
 
@@ -33,6 +33,13 @@ if [[ -z "$PORT" || "$PORT" == " " ]]; then
         exit 1
 fi
 
-echo "ssh -o ProxyCommand=\"ssh -W %h:%p $MANAGER_IP\" localhost -p $PORT"
+CONNECT_USERNAME=""
+if [[ ! -z "$2" && "$2" != " " ]]; then
+    CONNECT_USERNAME=$2
+else
+    CONNECT_USERNAME="$(whoami)"
+fi
 
-ssh -o ProxyCommand="ssh -W %h:%p $MANAGER_IP" localhost -p "$PORT"
+echo "ssh -o ProxyCommand=\"ssh -W %h:%p $CONNECT_USERNAME@$MANAGER_IP\" localhost -p $PORT"
+ssh -o ProxyCommand="ssh -W %h:%p $CONNECT_USERNAME@$MANAGER_IP" localhost -p "$PORT"
+

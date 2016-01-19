@@ -37,6 +37,8 @@ Vagrant.configure(2) do |config|
       }
       ansible.extra_vars["github_usernames_with_access"] = settings["github_usernames_with_access"]
       ansible.extra_vars["github_usernames_with_sudo_access"] = settings["github_usernames_with_sudo_access"]
+      ansible.extra_vars["domain_name"] = settings["domain_name"]
+      ansible.extra_vars["subdomain_name"] = settings["subdomain_name"]
     end
   end
 

@@ -66,7 +66,7 @@ Set the values specified in `settings_manager.yml` and `settings_field_node.yml`
 
 From the local machine, deploy the manager by calling:
 
-`./setup-manager.sh`
+`./setup_manager.sh`
 
 This helper script will use Vagrant to spin up an EC2 instances which will then be configured via Ansible. It will also update the Route53 `A` record for the manager to have the correct IP address for the instance.
 
@@ -116,7 +116,7 @@ TODO
 
 Assuming your github username has been specified prior to provisioning, you can connect to the management node directly:
 
-`ssh github-username@manager.example.net`
+`ssh github_username@manager.example.net`
 
 If for some reason you need to connect using the AWS key pair, `cd ./management-node` then call:
 
@@ -130,13 +130,19 @@ You may be able to connect to field nodes directly via ssh. By default the field
 
 If the field node is behind NAT or a firewall that blocks inbound SSH connections, you can connect to it via its reverse tunnel connection to the manager node. A helper script makes this simple:
 
-`./connect.sh node-name.example.com`
+`./connect.sh node-name.example.com [github_username]`
 
 Since the tunnel port on the manager varies, the helper script identifies the correct port by examining a note published as part of the DNS TXT record for the node.
 
 You can connect to the manager node directly, and then connect to the correct port at localhost on the manager:
 
 `ssh localhost -p PORTNUM`
+
+When connected to the manager, to see a list of remote IPs and the corresponding local ports they have tunnels to:
+
+```bash
+sudo lsof -i -n | egrep '\<sshd\>' | grep -v ":ssh" | grep LISTEN | sed 1~2d | awk '{ print $2}' | while read line; do sudo lsof -i -n | egrep $line | sed 3~3d | sed 's/.*->//' | sed 's/:......*(ESTABLISHED)//' | sed 's/.*://' | sed 's/(.*//' | sed 'N;s/\n/:/' 2>&1 ;done
+```
 
 ## Notes
 
