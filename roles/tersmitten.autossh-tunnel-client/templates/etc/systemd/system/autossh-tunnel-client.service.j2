@@ -2,13 +2,14 @@
 Description=Set up a persistent tunnel (using autossh)
 Documentation=man:autossh(1)
 After=network-online.target
+Requires=network-online.target
 
 [Service]
 Type=simple
 PIDFile={{ autossh_tunnel_client_autossh_pidfile }}
 
 Restart=on-failure
-RestartSec=15
+RestartSec=60
 
 Environment="AUTOSSH_DEBUG={{ autossh_tunnel_client_autossh_debug }}"
 Environment="AUTOSSH_FIRST_POLL={{ autossh_tunnel_client_autossh_first_poll }}"
