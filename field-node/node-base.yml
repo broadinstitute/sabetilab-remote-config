@@ -22,6 +22,9 @@
     - name: Install htop
       apt: pkg=htop state=installed
 
+    - name: Install openssh-server
+      apt: pkg=openssh-server state=installed
+
     - name: Install git
       apt: pkg=git state=installed
 
