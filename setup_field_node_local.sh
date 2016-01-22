@@ -24,7 +24,7 @@ echo "Domain parsed from $SETTINGS_YML as \"$DOMAIN_NAME\""
 echo ""
 echo "========================================================"
 read -p "Enter the node SSH daemon listen port [22]: " SSH_PORT
-SSH_PORT=${SSH_PORT:-"22"} # set default if not specified
+SSH_PORT=${SSH_PORT:-"6112"} # set default if not specified
 
 read -p "Enter the SSH tunnel port to be accessed on the relay [$REMOTE_LISTEN_PORT]: " SSH_TUNNEL_PORT
 SSH_TUNNEL_PORT=${SSH_TUNNEL_PORT:-"$REMOTE_LISTEN_PORT"}

@@ -34,9 +34,6 @@
     - name: Install tmux
       apt: pkg=tmux state=installed
 
-    - name: Install espeak
-      apt: pkg=espeak state=installed
-
     - name: Install python-dev
       apt: pkg=python-dev state=installed
 

@@ -72,13 +72,15 @@ This helper script will use Vagrant to spin up an EC2 instances which will then 
 
 ### Set up the field nodes
 
-The field nodes should be running Ubuntu 15.10 or later. Install the operating system and pick a hostname. The hostname will become the subdomain automatically given to the field node, and should match an entry found in the inventory file, `production`.
+The field nodes should be running Ubuntu 15.10 or later. Disable suspend in the power options. Install the operating system and pick a hostname. The hostname will become the subdomain automatically given to the field node, and should match an entry found in the inventory file, `production`.
 
 Using a USB thumbdrive or similar, copy the entire local checkout of this repo to each field node.
  
 On each field node, run:
 
 `sudo ./setup_field_node_local.sh`
+
+Enter the details as matching the details specified in the inventory file `production`.
 
 ## Making changes
 
@@ -92,7 +94,25 @@ An EC2 instance for the management node will be created. The IP address will be 
 
 ### field node
 
-TODO
+To issue one-off ansible commands to the nodes:
+
+`ansible nodes -i production [--sudo --ask-sudo-pass] -m shell -a "some_command"`
+
+Or for one node:
+
+`ansible node-3 -i production [--sudo --ask-sudo-pass] -m shell -a "some_command"`
+
+To call a playbook on the nodes:
+
+`ansible-playbook -i production --sudo [--ask-sudo-pass] some-playbook.yml`
+
+To reboot all nodes:
+
+`ansible nodes -i production --sudo --ask-sudo-pass -m shell -a "reboot"`
+
+To re-configure the nodes from their base playbook:
+
+`ansible-playbook -i production --sudo --ask-sudo-pass field-node/node-base.yml`
 
 ## Connecting to nodes
 
@@ -134,7 +154,7 @@ If the field node is behind NAT or a firewall that blocks inbound SSH connection
 
 Since the tunnel port on the manager varies, the helper script identifies the correct port by examining a note published as part of the DNS TXT record for the node.
 
-You can connect to the manager node directly, and then connect to the correct port at localhost on the manager:
+You can connect to the manager node directly, and then connect to the correct port at localhost on the manager (keys will need to be present on the manager and node):
 
 `ssh localhost -p PORTNUM`
 
