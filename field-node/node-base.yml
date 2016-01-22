@@ -87,20 +87,6 @@
       authorized_key: "user={{item|quote}} key=https://github.com/{{item}}.keys"
       with_items: "{{github_usernames_with_sudo_access}}"
 
-    - name: Ensure .ssh directory exists.
-      file: 
-        dest: "/home/ubuntu/.ssh"
-        mode: 0700 
-        owner: ubuntu
-        state: directory
-
-    - name: Install deployment ssh key
-      copy: 
-        content: "{{ deploy_ssh_private_key }}" 
-        dest: "/home/ubuntu/.ssh/id_rsa"
-        mode: 0600
-        owner: ubuntu
-
     - name: Copy in password clearing script
       template: 
         src: "../files/clear_and_expire_password.sh" 
@@ -110,6 +96,20 @@
     - name: Clear and expire passwords so sudoers are promped at first (key-based) login
       command: "/opt/field-node/clear_and_expire_password.sh {{item}}"
       with_items: "{{github_usernames_with_sudo_access}}"
+
+    # - name: Ensure .ssh directory exists.
+    #   file: 
+    #     dest: "/home/ubuntu/.ssh"
+    #     mode: 0700 
+    #     owner: ubuntu
+    #     state: directory
+
+    # - name: Install deployment ssh key
+    #   copy: 
+    #     content: "{{ deploy_ssh_private_key }}" 
+    #     dest: "/home/ubuntu/.ssh/id_rsa"
+    #     mode: 0600
+    #     owner: ubuntu
 
     #- name: setup cron job to call ansible-pull every hour
     #  cron: 
