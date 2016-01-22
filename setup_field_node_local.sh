@@ -11,7 +11,7 @@ if [[ "$UID" -ne "$ROOT_UID" ]] ; then
     exit 1
 fi
 
-apt-get install -y ansible
+apt-get install -y ansible openssh-server
 
 SCRIPT_DIRECTORY=$(dirname $0)
 SETTINGS_YML="settings_field_node.yml"
