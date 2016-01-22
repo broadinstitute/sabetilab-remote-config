@@ -9,29 +9,10 @@ fi
 
 SCRIPT_DIRECTORY=$(dirname $0)
 
-DOMAIN=$1
+NODE_DOMAIN=$1
 #RELAY_DOMAIN=""
 
 RELAY_DOMAIN=$(cat $SCRIPT_DIRECTORY/settings_field_node.yml | grep "manager_domain_name" | perl -lape 's/(.*):\s*(\S*)/$2/g')
-
-# get the IP of the manager node
-# use the AWS nameserver to ensure most current DNS records
-MANAGER_IP=$(dig A +short $RELAY_DOMAIN @ns-491.awsdns-61.com)
-
-# get the port from the DNS TXT record for this subdomain
-# use the AWS nameserver to ensure most current DNS records
-PORT=$(dig TXT +short $DOMAIN @ns-491.awsdns-61.com | awk -F'"' '{ print $2}' | perl -lape 's/^P([0-9]+)\\.*/$1/g')
-
-echo "Connecting to '$DOMAIN' via local port '$PORT' on relay '$RELAY_DOMAIN'"
-echo ""
-echo "Note: a live reverse tunnel must be present between '$DOMAIN' and '$RELAY_DOMAIN'"
-echo "      binding the SSH port of '$DOMAIN' to the local port '$PORT' on '$RELAY_DOMAIN.'"
-echo ""
-
-if [[ -z "$PORT" || "$PORT" == " " ]]; then
-        echo "The TXT record for the subdomain specified does begin have a ^PNNN; ... entry"
-        exit 1
-fi
 
 CONNECT_USERNAME=""
 if [[ ! -z "$2" && "$2" != " " ]]; then
@@ -40,6 +21,25 @@ else
     CONNECT_USERNAME="$(whoami)"
 fi
 
-echo "ssh -o ProxyCommand=\"ssh -W %h:%p $CONNECT_USERNAME@$MANAGER_IP\" localhost -p $PORT"
-ssh -o ProxyCommand="ssh -W %h:%p $CONNECT_USERNAME@$MANAGER_IP" localhost -p "$PORT"
+# get the IP of the manager node
+# use the AWS nameserver to ensure most current DNS records
+MANAGER_IP=$(dig A +short $RELAY_DOMAIN @ns-491.awsdns-61.com)
+
+# get the port from the DNS TXT record for this subdomain
+# use the AWS nameserver to ensure most current DNS records
+PORT_ON_RELAY=$(dig TXT +short $NODE_DOMAIN @ns-491.awsdns-61.com | perl -lape 's/^"P(?<port_num>[0-9]+)\\.*"/$+{port_num}/g')
+
+if [[ -z "$PORT_ON_RELAY" || "$PORT_ON_RELAY" == " " ]]; then
+        echo "The TXT record for the subdomain specified does begin have a ^PNNN; ... entry"
+        exit 1
+fi
+
+echo "Connecting to '$NODE_DOMAIN' via local port '$PORT_ON_RELAY' on relay '$RELAY_DOMAIN'"
+echo ""
+echo "Note: a live reverse tunnel must be present between '$NODE_DOMAIN' and '$RELAY_DOMAIN'"
+echo "      binding the SSH port of '$NODE_DOMAIN' to the local port '$PORT_ON_RELAY' on '$RELAY_DOMAIN.'"
+echo ""
+
+echo "ssh -o ProxyCommand=\"ssh -W %h:%p $CONNECT_USERNAME@$MANAGER_IP\" localhost -p $PORT_ON_RELAY"
+ssh -o ProxyCommand="ssh -W %h:%p $CONNECT_USERNAME@$MANAGER_IP" localhost -p "$PORT_ON_RELAY"
 

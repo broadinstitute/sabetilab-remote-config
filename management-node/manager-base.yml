@@ -30,6 +30,9 @@
     - name: Install git
       apt: pkg=git state=installed
 
+    - name: Install tmux
+      apt: pkg=tmux state=installed
+
     - name: Install ansible
       apt: pkg=ansible state=installed
 

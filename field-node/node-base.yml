@@ -31,11 +31,24 @@
     - name: Install ansible
       apt: pkg=ansible state=installed
 
+    - name: Install tmux
+      apt: pkg=tmux state=installed
+
+    - name: Install espeak
+      apt: pkg=espeak state=installed
+
     - name: Install python-dev
       apt: pkg=python-dev state=installed
 
-    - name: Install pip
-      apt: pkg=python-pip state=installed
+    - name: download pip installer script
+      get_url: 
+        url: https://bootstrap.pypa.io/get-pip.py
+        dest: "/opt/get-pip.py"
+        mode: "0755"
+      register: pip_script_downloaded
+    - name: install pip
+      command: "python /opt/get-pip.py"
+      when: pip_script_downloaded|success
 
     - name: Create file copy destination on remote
       file: path=/opt/field-node state=directory mode=0755
