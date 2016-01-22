@@ -36,20 +36,21 @@ if [[ -z $NODEHOSTNAME ]]; then
     echo "keeping the same hostname: $(hostname)"
     NODEHOSTNAME="$(hostname)"
 fi
-echo "127.0.0.1    localhost.localdomain localhost" > /etc/hosts
-echo "127.0.1.1    $NODEHOSTNAME.$DOMAIN_NAME $NODEHOSTNAME" >> /etc/hosts
-echo "" >> /etc/hosts
-hostnamectl set-hostname $NODEHOSTNAME
-grep "search $DOMAIN_NAME" /etc/resolvconf/resolv.conf.d/base || echo "search $DOMAIN_NAME" >> /etc/resolvconf/resolv.conf.d/base
 
 echo ""
-echo "The hostname of this machine is: \"$NODEHOSTNAME\""
-echo "The FQDN of this machine is: \"$NODEHOSTNAME.$DOMAIN_NAME\""
+echo "The hostname of this machine will be: \"$NODEHOSTNAME\""
+echo "The FQDN of this machine will be: \"$NODEHOSTNAME.$DOMAIN_NAME\""
 echo "The SSH daemon will listen on port: $SSH_PORT"
 echo "This node can be reached via the manager node on its local port $SSH_TUNNEL_PORT"
 echo ""
 
 read -p "Press [ENTER] to configure this machine, or [Control+C] to cancel"
+
+echo "127.0.0.1    localhost.localdomain localhost" > /etc/hosts
+echo "127.0.1.1    $NODEHOSTNAME.$DOMAIN_NAME $NODEHOSTNAME" >> /etc/hosts
+echo "" >> /etc/hosts
+hostnamectl set-hostname $NODEHOSTNAME
+grep "search $DOMAIN_NAME" /etc/resolvconf/resolv.conf.d/base || echo "search $DOMAIN_NAME" >> /etc/resolvconf/resolv.conf.d/base
 
 #ansible-playbook ./field-node/node-base.yml -i ./production --connection=local --sudo # -vvvv
 ansible-playbook ./field-node/node-base.yml -i "[nodes]localhost," --connection=local --sudo --extra-vars="ssh_port=$SSH_PORT ssh_tunnel_port=$SSH_TUNNEL_PORT"
