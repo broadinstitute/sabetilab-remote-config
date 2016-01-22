@@ -35,7 +35,7 @@
       apt: pkg=python-dev state=installed
 
     - name: Install pip
-      easy_install: name=pip
+      apt: pkg=python-pip state=installed
 
     - name: Create file copy destination on remote
       file: path=/opt/field-node state=directory mode=0755
