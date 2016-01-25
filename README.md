@@ -45,22 +45,22 @@ Generate the ssh keys used for the reverse tunnel, manager from field node, and 
 
 `./initial_keygen.sh`
 
-Enter the GitHub public key (`./files/github_deploy_read_only_id_rsa.pub`) into the deployment keys section of this repository on GitHub, with Read Only permissions.
-
-Create an AWS IAM user with EC2 and Route53 permissions, save the credentials. Use the key and secret in configuring `settings_manager.yml`. Create a second set of AWS credentials with only Route53 permissions, and use the values in configuring `settings_field_node.yml`.
-
-Create a Route53 A record for the subdomain to be used for the management node (vagrant-aws-route53 can update the record but not create it).  The name `manager` is suggested. This record can be created via the AWS web console.
-
-Create an AWS SSH key pair for accessing EC2 instances, copying the *.pem file to a known location (`~/.ssh/` is suggested), and change its permissions: `chmod 600` This key can be created via the AWS web console.
-
-Ensure the default EC2 security group permits inbound SSH connections on ports {22,6112} from anywhere.
+Enter the GitHub public key (`./files/github_deploy_read_only_id_rsa.pub`) into the deployment keys section of this repository on GitHub, with Read Only permissions. This key can be used to clone the remote config repository to obtain future updates to the ansible palybooks.
 
 Create a new `settings_manager.yml` in this directory, based on `settings_manager.yml.template`
 Create a new `settings_field_node.yml` in this directory, based on `settings_field_node.yml.template`
 
+Create an AWS IAM user with EC2 and Route53 permissions, and save the credentials. Use the key and secret in configuring `settings_manager.yml`. Create a second set of AWS credentials with only Route53 permissions, and use the values in configuring `settings_field_node.yml`.
+
+Create a Route53 A record for the subdomain to be used for the management node (vagrant-aws-route53 can update the record but not create it).  The name `manager` is suggested. This record can be created via the AWS web console.
+
+Create an AWS SSH key pair for accessing EC2 instances, copy the *.pem file to a known location (`~/.ssh/` is suggested), and change its permissions: `chmod 600` This key can be created via the AWS web console.
+
+Ensure the default EC2 security group permits inbound SSH connections on ports {22,6112} from anywhere.
+
 Set the values specified in `settings_manager.yml` and `settings_field_node.yml`.
 
-**Note:** If you do not have any public key pairs associated with yout GitHub account, you will need to generate a new pair and add the public key, as [described here](https://help.github.com/articles/generating-ssh-keys/), and [add it to your GitHub profile](https://github.com/settings/ssh). This will allow you to authenticate directly into the management noe and the field nodes, as long as the private key is present and configured in `~/.ssh/`.
+**Note:** If you do not have any public key pairs associated with yout GitHub account, you will need to generate a new pair and as [described here](https://help.github.com/articles/generating-ssh-keys/), and [add the public key to your GitHub profile](https://github.com/settings/ssh). This will allow you to authenticate directly into the management node and the field nodes, as long as the private key is present and configured in `~/.ssh/`.
 
 ### Set up the manager
 
@@ -68,11 +68,11 @@ From the local machine, deploy the manager by calling:
 
 `./setup_manager.sh`
 
-This helper script will use Vagrant to spin up an EC2 instances which will then be configured via Ansible. It will also update the Route53 `A` record for the manager to have the correct IP address for the instance.
+This helper script will use Vagrant to initialize an EC2 instances which will then be configured via Ansible. It will also update the Route53 `A` record for the manager to have the correct IP address for the instance.
 
 ### Set up the field nodes
 
-The field nodes should be running Ubuntu 15.10 or later. Disable suspend in the power options. Install the operating system and pick a hostname. The hostname will become the subdomain automatically given to the field node, and should match an entry found in the inventory file, `production`.
+The field nodes should be running Ubuntu 15.10 or later. Install the operating system and pick a hostname. The hostname will become the subdomain automatically given to the field node, and should match an entry found in the inventory file, `production`. Disable suspend in the power options.
 
 Using a USB thumbdrive or similar, copy the entire local checkout of this repo to each field node.
  
@@ -80,7 +80,7 @@ On each field node, run:
 
 `sudo ./setup_field_node_local.sh`
 
-Enter the details as matching the details specified in the inventory file `production`.
+Enter the details as matching the details specified in the inventory file, `./production`.
 
 ## Making changes
 
@@ -88,7 +88,7 @@ Enter the details as matching the details specified in the inventory file `produ
 
 To apply changes to the management node, it must be reprovisioned:
 
-`vagrant provision`
+`vagrant provision` (from `./management-node`)
 
 An EC2 instance for the management node will be created. The IP address will be updated on the domain record for the subdomain of the domain name specified in `settings_manager.yml`.
 
@@ -102,7 +102,7 @@ Or for one node:
 
 `ansible node-3 -i production [--sudo --ask-sudo-pass] -m shell -a "some_command"`
 
-To call a playbook on the nodes:
+To run a playbook on the nodes:
 
 `ansible-playbook -i production --sudo [--ask-sudo-pass] some-playbook.yml`
 
@@ -134,7 +134,7 @@ To re-configure the nodes from their base playbook:
 
 ### management node
 
-Assuming your github username has been specified prior to provisioning, you can connect to the management node directly:
+Assuming your github username has been specified prior to provisioning, you can connect to the management node directly using your own SSH credentials:
 
 `ssh github_username@manager.example.net`
 
@@ -144,7 +144,7 @@ If for some reason you need to connect using the AWS key pair, `cd ./management-
 
 ### field nodes
 
-You may be able to connect to field nodes directly via ssh. By default the field nodes run their SSH daemon on port 6112, though this an be configured in the ./production inventory file.
+You may be able to connect to field nodes directly via ssh. By default the field nodes run their SSH daemon on port 6112.
 
 `ssh github_username@node-name.example.com -p 6112`
 
@@ -154,7 +154,7 @@ If the field node is behind NAT or a firewall that blocks inbound SSH connection
 
 Since the tunnel port on the manager varies, the helper script identifies the correct port by examining a note published as part of the DNS TXT record for the node.
 
-You can connect to the manager node directly, and then connect to the correct port at localhost on the manager (keys will need to be present on the manager and node):
+You can connect to the manager node directly, and then connect to the correct port at localhost on the management node (keys will need to be present on the manager and field nodes):
 
 `ssh localhost -p PORTNUM`
 

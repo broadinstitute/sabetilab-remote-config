@@ -5,8 +5,8 @@ manager.sabeti-aws.net
 node-1 ansible_port=32001 ssh_tunnel_port=32001
 node-2 ansible_port=32002 ssh_tunnel_port=32002
 node-3 ansible_port=32003 ssh_tunnel_port=32003
-node-4 ansible_port=32004 ssh_tunnel_port=32004
-node-5 ansible_port=32005 ssh_tunnel_port=32005
+#node-4 ansible_port=32004 ssh_tunnel_port=32004
+#node-5 ansible_port=32005 ssh_tunnel_port=32005
 
 [nodes:vars]
 ansible_ssh_common_args='-o ProxyCommand="ssh -W %h:%p manager.sabeti-aws.net"'
