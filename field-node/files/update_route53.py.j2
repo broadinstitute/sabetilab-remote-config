@@ -2,7 +2,7 @@
 
 # based on: https://gist.github.com/vrypan/4341878
 
-import os, sys
+import io, os, sys, re
 import socket
 from datetime import datetime
 
@@ -16,8 +16,30 @@ import requests
 
 import dns.resolver #dnspython
 
-domain = '{{domain_name}}'
-subdomain = socket.gethostname()
+domain_name = '{{domain_name}}'
+subdomain_name = socket.gethostname()
+remote_port_file = "{{ autossh_tunnel_client_autossh_remote_port_file }}" #"/var/run/autossh/autossh-remote-listen-port"
+
+def read_remote_port_from_file(port_file_path):
+    port_file_path = os.path.realpath(os.path.expanduser(port_file_path))
+
+    port_num = None
+
+    if os.path.exists(port_file_path):
+        with open(port_file_path,"r") as portfile:
+            last_line = ""
+            for line in portfile:
+                current_line = line.strip().replace("\n", "").replace("\r", "")
+                if len(current_line):
+                    last_line = current_line
+
+            if len(last_line):
+                port_num = last_line
+
+    if not port_num:
+        port_num = "{{ ssh_tunnel_port | default(32000) }}"
+
+    return port_num
 
 def get_public_ip():
     # equivalent to:
@@ -26,30 +48,76 @@ def get_public_ip():
     resolver.nameservers=[ socket.gethostbyname('ns1.google.com') ]
     return str(resolver.query('o-o.myaddr.l.google.com', 'TXT')[0]).replace('"','')
 
-fqdn = '%s.%s' % (subdomain, domain)
-zone = route53.get_zone(domain)
-arec = zone.get_a(fqdn)
-new_value = get_public_ip()
-datestr = '"P{{ssh_tunnel_port}}; Last update %s."' % datetime.utcnow().strftime('%Y-%m-%d %H:%M')
+def get_txt_rec(domain_name):
+    resolver = dns.resolver.Resolver()
+    resolver.nameservers=[ socket.gethostbyname('ns-491.awsdns-61.com') ]
+    return str(resolver.query(domain_name, 'TXT')[0]).replace('"','')
 
-if arec:
-        old_value = arec.resource_records[0]
+def get_port(domain_name):
+    txt_record = get_txt_rec(domain_name)
+    port_num_matches = re.findall('^P(\d+);.*', txt_record)
+    port_num = ""
+    if len(port_num_matches) > 0:
+        port_num = port_num_matches[0]
 
-        if old_value == new_value:
-                print('%s is current. (%s)' % (fqdn, new_value))
-                sys.exit(0)
+    return port_num
 
-        print('Updating %s: %s -> %s' % (fqdn, old_value, new_value))
+def update_dns(subdomain, domain, new_ip, new_port):
+    fqdn = '%s.%s' % (subdomain, domain)
+    zone = route53.get_zone(domain)
+    a_record = zone.get_a(fqdn)
 
-        try:
-                zone.update_a(fqdn, new_value, 900)
-                zone.update_txt(fqdn, datestr, 900)
+    old_port = get_port(fqdn)
 
-        except DNSServerError:
-                # This can happen if the record did not already exist. Let's
-                # try to add_a in case that's the case here.
-                zone.add_a(fqdn, new_value, 900)
-                zone.add_txt(fqdn, datestr, 900)
-else:
-        zone.add_a(fqdn, new_value, 900)
-        zone.add_txt(fqdn, datestr, 900)
+    datestr = '"P%s; Last update %s."' % (new_port, datetime.utcnow().strftime('%Y-%m-%d %H:%M'))
+
+    if a_record:
+            old_ip = a_record.resource_records[0]
+
+            if old_ip == new_ip and old_port == new_port:
+                    if sys.stdin.isatty():
+                        print('%s is current. (%s)' % (fqdn, new_ip))
+                    sys.exit(0)
+
+            if old_ip != new_ip:
+                try:
+                    if sys.stdin.isatty():
+                        print('Updating %s: %s -> %s' % (fqdn, old_ip, new_ip))
+                    zone.update_a(fqdn, new_ip, 900)
+                except DNSServerError:
+                    # create the record
+                    zone.add_a(fqdn, new_ip, 900)
+
+            if old_port != new_port:
+                try:
+                    if sys.stdin.isatty():
+                        print('Updating port for %s: %s -> %s' % (fqdn, old_port, new_port))
+                    zone.update_txt(fqdn, datestr, 900)
+                except DNSServerError:
+                    # create the record
+                    zone.add_txt(fqdn, datestr, 900)
+
+    else:
+            zone.add_a(fqdn, new_ip, 900)
+            zone.add_txt(fqdn, datestr, 900)
+
+if __name__ == "__main__":
+    new_ip = get_public_ip()
+
+    # if this is piped input, use the port numbers piped in
+    if not sys.stdin.isatty():
+        # py2 buffers lines and waits for EOF
+        # however since autossh is a long-running process
+        # we need to deal with its output as a stream via the io module
+        for line in io.open(sys.stdin.fileno()):
+            line = line.strip().replace("\n","").replace("\r","")
+            if len(line):
+                new_port = line
+                with open(remote_port_file, "wb") as pfile:
+                    pfile.write(new_port+"\n")
+                update_dns(subdomain_name, domain_name, new_ip, new_port)
+                #print(line)
+    # otherwise use the port number from the file
+    else:
+        new_port = read_remote_port_from_file(remote_port_file)
+        update_dns(subdomain_name, domain_name, new_ip, new_port)

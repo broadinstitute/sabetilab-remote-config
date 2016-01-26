@@ -26,6 +26,24 @@
     - autossh-tunnel-client-configuration
     - autossh-tunnel-client-configuration-directories
 
+- name: create autossh startup script
+  template:
+    src: opt/start-autossh.sh.j2
+    dest: /opt/start-autossh.sh
+    owner: root
+    group: root
+    mode: 0744
+  notify: restart autossh-tunnel-client
+
+- name: create autossh restart script
+  template:
+    src: opt/restart-autossh.sh.j2
+    dest: /opt/restart-autossh.sh
+    owner: root
+    group: root
+    mode: 0744
+  notify: restart autossh-tunnel-client
+
 - name: copy key file(s)
   copy:
     src: "{{ item.src }}"

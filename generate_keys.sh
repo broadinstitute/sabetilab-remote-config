@@ -17,15 +17,13 @@ ssh-keygen -t rsa -b 4096 -C "autossh_tunnel_key" -N '' -f $KEY_DIRECTORY/$AUTOS
 
 # generate GitHub deployment keys
 # as github_deploy_read_only_id_rsa(.pub)
-ssh-keygen -t rsa -b 4096 -C "github_deploy_read_only_id_rsa" -N '' -f $KEY_DIRECTORY/$GITHUB_KEY_PREFIX
-
-echo ""
-echo " ==================================================================================================="
-echo "  Important! Be sure to copy the GitHub public key to the deployment keys section of this repository!"
-echo "  It is located here: "
-echo "    $KEY_DIRECTORY/$GITHUB_KEY_PREFIX.pub"
-echo "  The public key is:"
-echo ""
-
-cat $KEY_DIRECTORY/$GITHUB_KEY_PREFIX.pub
-echo ""
+# ssh-keygen -t rsa -b 4096 -C "github_deploy_read_only_id_rsa" -N '' -f $KEY_DIRECTORY/$GITHUB_KEY_PREFIX
+# echo ""
+# echo " ==================================================================================================="
+# echo "  Important! Be sure to copy the GitHub public key to the deployment keys section of this repository!"
+# echo "  It is located here: "
+# echo "    $KEY_DIRECTORY/$GITHUB_KEY_PREFIX.pub"
+# echo "  The public key is:"
+# echo ""
+# cat $KEY_DIRECTORY/$GITHUB_KEY_PREFIX.pub
+# echo ""

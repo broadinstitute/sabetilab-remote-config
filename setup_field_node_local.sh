@@ -26,8 +26,8 @@ echo "========================================================"
 read -p "Enter the node SSH daemon listen port [22]: " SSH_PORT
 SSH_PORT=${SSH_PORT:-"6112"} # set default if not specified
 
-read -p "Enter the SSH tunnel port to be accessed on the relay [$REMOTE_LISTEN_PORT]: " SSH_TUNNEL_PORT
-SSH_TUNNEL_PORT=${SSH_TUNNEL_PORT:-"$REMOTE_LISTEN_PORT"}
+read -p "Enter the SSH tunnel port to be accessed on the relay (default:dynamic): " SSH_TUNNEL_PORT
+SSH_TUNNEL_PORT=${SSH_TUNNEL_PORT:-"0"}
 
 read -p "Enter would you like the hostname of this machine to be [$(hostname)]: " NODEHOSTNAME
 NODEHOSTNAME=${NODEHOSTNAME:-"$(hostname)"}

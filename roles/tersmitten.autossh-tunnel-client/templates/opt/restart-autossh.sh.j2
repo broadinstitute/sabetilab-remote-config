@@ -1,0 +1,4 @@
+#!/bin/bash
+
+{{ autossh_pre_restart_command | default("sleep 1") }}
+service autossh-tunnel-client restart && sleep 3 && {{ autossh_post_restart_command | default("exit(0)") }}

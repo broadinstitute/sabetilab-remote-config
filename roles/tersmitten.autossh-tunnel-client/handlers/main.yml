@@ -1,5 +1,8 @@
 # handlers file for autossh-tunnel-client
 ---
+#- name: restart autossh-tunnel-client
+#  command: "/opt/restart-autossh.sh"
+
 - name: restart autossh-tunnel-client
   service:
     name: autossh-tunnel-client

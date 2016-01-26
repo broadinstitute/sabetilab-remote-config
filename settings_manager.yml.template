@@ -15,3 +15,8 @@ github_usernames_with_access: []
 github_usernames_with_sudo_access: 
   - ""
   - ""
+
+connected_nodes:
+  - node-1
+  - node-2
+  - node-3

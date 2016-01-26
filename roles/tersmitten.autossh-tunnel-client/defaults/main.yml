@@ -5,6 +5,10 @@ autossh_tunnel_client_autossh_first_poll: 30
 autossh_tunnel_client_autossh_gatetime: 0
 autossh_tunnel_client_autossh_loglevel: 7
 autossh_tunnel_client_autossh_pidfile: /var/run/autossh/autossh-tunnel-client.pid
+autossh_tunnel_client_autossh_remote_port_file: /var/run/autossh/autossh-remote-listen-port
+autossh_post_restart_command: "sleep 1"
+autossh_pre_restart_command: "sleep 1"
+autossh_remote_port_stdin_receiver: ""
 autossh_tunnel_client_autossh_poll: 60
 
 autossh_tunnel_client_key_map: []

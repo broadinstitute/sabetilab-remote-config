@@ -1,14 +1,11 @@
 [managers]
 manager.sabeti-aws.net
 
-[nodes]
-node-1 ansible_port=32001 ssh_tunnel_port=32001
-node-2 ansible_port=32002 ssh_tunnel_port=32002
-node-3 ansible_port=32003 ssh_tunnel_port=32003
-#node-4 ansible_port=32004 ssh_tunnel_port=32004
-#node-5 ansible_port=32005 ssh_tunnel_port=32005
+#[nodes]
+# dynamic-inventory.py should be used
+#node-1 ssh_tunnel_port=32000
 
-[nodes:vars]
-ansible_ssh_common_args='-o ProxyCommand="ssh -W %h:%p manager.sabeti-aws.net"'
-ansible_host=localhost
-ssh_port=6112
+#[nodes:vars]
+#ansible_ssh_common_args='-o ProxyCommand="ssh -W %h:%p manager.sabeti-aws.net"'
+#ansible_host=localhost
+#ssh_port=6112

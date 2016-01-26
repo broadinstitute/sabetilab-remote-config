@@ -9,7 +9,8 @@
     autossh_tunnel_client_key_map:
       - src: "../keys/{{autossh_tunnel_client_identity}}"
     autossh_tunnel_client_host: "{{ manager_domain_name }}"
-    autossh_tunnel_client_forward: '{{ ssh_tunnel_port }}:127.0.0.1:{{ ssh_port }}'
+    autossh_tunnel_client_forward: '{{ ssh_tunnel_port | default(0) }}:127.0.0.1:{{ ssh_port }}'
+    autossh_remote_port_stdin_receiver: "/opt/field-node/update_route53.py"
 
   vars_files:
     - "../settings_field_node.yml"
@@ -71,6 +72,7 @@
         name: "update route53 (on reboot)"
         special_time: reboot
         job: "/opt/field-node/update_route53.py"
+        state: absent
 
     - name: setup cron job to update Route53 every half-hour
       cron: 
