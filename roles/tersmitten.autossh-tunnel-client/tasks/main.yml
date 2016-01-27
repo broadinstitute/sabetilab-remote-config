@@ -80,12 +80,16 @@
     owner: root
     group: root
     mode: 0644
+  register: autossh_service_file
   notify: restart autossh-tunnel-client
   tags:
     - configuration
     - autossh-tunnel-client
     - autossh-tunnel-client-configuration
     - autossh-tunnel-client-configuration-init
+
+- shell: systemctl daemon-reload
+  when: autossh_service_file.changed
 
 - name: start and enable service
   service:

@@ -117,9 +117,11 @@ To reboot all nodes:
 
 `ansible nodes -i dynamic-inventory.py --sudo --ask-sudo-pass -m shell -a "reboot"`
 
-To re-configure the nodes from their base playbook:
+To re-provision the field nodes from their base playbook:
 
 `ansible-playbook -i dynamic-inventory.py --sudo --ask-sudo-pass field-node/node-base.yml`
+
+**Note:** re-provisioning the field nodes will trigger a reboot(?)
 
 To reboot the field nodes:
 

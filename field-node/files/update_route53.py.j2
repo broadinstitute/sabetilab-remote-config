@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 
 # based on: https://gist.github.com/vrypan/4341878
 
@@ -112,10 +112,15 @@ if __name__ == "__main__":
         for line in io.open(sys.stdin.fileno()):
             line = line.strip().replace("\n","").replace("\r","")
             if len(line):
-                new_port = line
-                with open(remote_port_file, "wb") as pfile:
-                    pfile.write(new_port+"\n")
-                update_dns(subdomain_name, domain_name, new_ip, new_port)
+                new_port = ""
+                new_port_matches = re.findall('Allocated port ([0-9]+) for remote forward to.*', line)
+                if len(new_port_matches):
+                    new_port = new_port_matches[0]
+                if len(new_port):
+                    #print(new_port)
+                    with open(remote_port_file, "wb") as pfile:
+                        pfile.write(new_port+"\n")
+                    update_dns(subdomain_name, domain_name, new_ip, new_port)
                 #print(line)
     # otherwise use the port number from the file
     else:

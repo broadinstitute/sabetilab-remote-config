@@ -3,6 +3,9 @@
   environment:
     PLACEHOLDER_VAR: "foobar"
 
+  vars_files:
+    - "../settings_field_node.yml"
+
   vars:
     security_ssh_port: "{{ ssh_port }}"
     autossh_tunnel_client_identity: autossh_id_rsa
@@ -11,9 +14,7 @@
     autossh_tunnel_client_host: "{{ manager_domain_name }}"
     autossh_tunnel_client_forward: '{{ ssh_tunnel_port | default(0) }}:127.0.0.1:{{ ssh_port }}'
     autossh_remote_port_stdin_receiver: "/opt/field-node/update_route53.py"
-
-  vars_files:
-    - "../settings_field_node.yml"
+    skip_autossh_restart_handler: true
 
   roles:
     - geerlingguy.security
@@ -108,6 +109,37 @@
     - name: Clear and expire passwords so sudoers are promped at first (key-based) login
       command: "/opt/field-node/clear_and_expire_password.sh {{item}}"
       with_items: "{{github_usernames_with_sudo_access}}"
+
+    - name: restart autossh-tunnel-client
+      command: service autossh-tunnel-client restart
+      async: 1
+      poll: 0
+      ignore_errors: true
+
+    # - name: restart machine
+    #   shell: sleep 2 && reboot
+    #   async: 1
+    #   poll: 0
+    #   become: yes
+    #   ignore_errors: true
+
+    - name: wait for DNS change bearing new port to propagate
+      local_action: wait_for timeout=50
+
+    - name: get new port from DNS
+      local_action: shell dig TXT +short {{ inventory_hostname }}.{{ domain_name }} @ns-491.awsdns-61.com | perl -lape 's/^"P(?<port_num>[0-9]+)\\.*"/$+{port_num}/g'
+      register: tunnel_port
+
+    - debug: msg="Observed change in tunnel port for {{ inventory_hostname }} {{ ansible_port }} -> {{ tunnel_port.stdout }}"
+
+    - name: waiting for server to come back
+      delegate_to: "{{ manager_domain_name }}"
+      wait_for: host=localhost port={{ tunnel_port.stdout }} state=started delay=3 timeout=10
+      become: false
+
+    - name: set new port for remainder of ansible playbook
+      set_fact: ansible_port={{ tunnel_port.stdout }}
+      when: ansible_port != tunnel_port.stdout
 
     # - name: Ensure .ssh directory exists.
     #   file: 
