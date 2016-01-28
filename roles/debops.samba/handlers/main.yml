@@ -1,0 +1,6 @@
+---
+
+- name: Reload samba
+  command: service {{ item }} restart
+  with_items: "{{ samba_service_names }}"
+

@@ -117,11 +117,18 @@ To reboot all nodes:
 
 `ansible nodes -i dynamic-inventory.py --sudo --ask-sudo-pass -m shell -a "reboot"`
 
-To re-provision the field nodes from their base playbook:
+To re-provision the field nodes from their full setup playbook:
 
-`ansible-playbook -i dynamic-inventory.py --sudo --ask-sudo-pass field-node/node-base.yml`
+`ansible-playbook -i dynamic-inventory.py --sudo --ask-sudo-pass field-node/node-full.yml`
 
-**Note:** re-provisioning the field nodes will trigger a reboot(?)
+The following field node playbooks exist and may be used for more directed configuration changes:
+* `field-node/node-full.yml` (complete setup of field nodes including playbooks below)
+* `field-node/node-base.yml` installs dependencies and configures SSH daemon
+* `field-node/node-users.yml` creates users specified in `settings_field_node.yml` and adds their github keys as appropriate
+* `field-node/node-samba.yml` installs and configures samba server, adds samba user
+* `field-node/node-tunnel.yml` installs autossh and configures SSH reverse tunnel
+* `node-restart-autossh.yml` restarts the autossh daemon
+
 
 To reboot the field nodes:
 

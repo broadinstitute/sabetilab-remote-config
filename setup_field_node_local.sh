@@ -52,5 +52,5 @@ echo "" >> /etc/hosts
 hostnamectl set-hostname $NODEHOSTNAME
 grep "search $DOMAIN_NAME" /etc/resolvconf/resolv.conf.d/base || echo "search $DOMAIN_NAME" >> /etc/resolvconf/resolv.conf.d/base
 
-#ansible-playbook ./field-node/node-base.yml -i ./production --connection=local --sudo # -vvvv
-ansible-playbook ./field-node/node-base.yml -i "[nodes]localhost," --connection=local --sudo --extra-vars="ssh_port=$SSH_PORT ssh_tunnel_port=$SSH_TUNNEL_PORT"
+#ansible-playbook ./field-node/node-full.yml -i ./production --connection=local --sudo # -vvvv
+ansible-playbook ./field-node/node-full.yml -i "[nodes]localhost," --connection=local --sudo --extra-vars="ssh_port=$SSH_PORT ssh_tunnel_port=$SSH_TUNNEL_PORT"

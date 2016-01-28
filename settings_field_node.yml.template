@@ -7,6 +7,8 @@ aws_secret_access_key: mysecretacceskey
 aws_hosted_zone_id: SOMEZONEIF
 domain_name: example.net
 manager_domain_name: manager.example.net
+local_usernames_with_sudo_access: []
+local_usernames_with_access: []
 github_usernames_with_access: []
 github_usernames_with_sudo_access: 
   - ""

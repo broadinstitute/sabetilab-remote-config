@@ -1,0 +1,430 @@
+---
+
+# Enable or disable iptables management
+ferm_enabled: True
+
+# Should ferm-rules be flushed when ferm is disabled? The default is
+# true, but you may need set both `ferm` and this to ``False`` if you
+# are running in some container and are not allowed to change
+# iptables.
+ferm_flush: '{{ ferm_enabled | bool }}'
+
+# List of packages to install
+ferm_packages: [ 'ferm', 'patch' ]
+
+# Enable support for executing hooks at certain points in the init script.
+ferm_init_hooks: True
+
+# List of iptables domains enabled in main ferm firewall
+# Currently supported domains:
+#   - 'ip'  - enables IPv4 support (iptables)
+#   - 'ip6' - enables IPv6 support (ip6tables)
+ferm_domains: [ 'ip', 'ip6' ]
+
+# Optional list of CIDR hosts which are not included in ssh port recent filter
+# and won't be blocked by the firewall in case of too many connections.
+# Entries are saved in the local facts on remote hosts.
+# Remember to specify IP address from the remote host point of view.
+# Format: "IP address/netmask", for example: '192.168.1.1/32'
+# Note: If you are using debop.tcpwrappers, too (or the DebOps playbook),
+#       mind setting `tcpwrappers_ansible_controllers`. An easier way would
+#       be to use the `debops.sshd` role to configure ssh service.
+ferm_ansible_controllers: []
+
+# List of ports which are opened for access from Ansible Controllers
+ferm_ansible_controllers_ports: [ 'ssh' ]
+
+# Default iptables policy for INPUT, OUTPUT and FORWARD chains
+ferm_default_policy_input: 'DROP'
+ferm_default_policy_output: 'ACCEPT'
+ferm_default_policy_forward: 'DROP'
+
+# Manage filtering of ICMP packets using ``hashlimit`` module.
+ferm_filter_icmp: True
+ferm_filter_icmp_limit: '10/second'
+ferm_filter_icmp_burst: '10'
+ferm_filter_icmp_expire: '{{ (60 * 60) }}'
+
+# Manage filtering of TCP SYN packets using ``hashlimit`` module.
+ferm_filter_syn: True
+ferm_filter_syn_limit: '40/second'
+ferm_filter_syn_burst: '20'
+ferm_filter_syn_expire: '{{ (60 * 60) }}'
+
+# Enable recent filter in respective rules. You might need to disable it on
+# certain hosts, like OpenVZ containers that don't have 'recent' module
+# available.
+ferm_filter_recent: True
+
+# Name of recent list to block early
+ferm_filter_recent_name: 'badguys'
+
+# Length of time in seconds to block recent offenders; if they try connecting
+# before the time is up, timer is reset
+ferm_filter_recent_time: '{{ (60 * 60 * 2) }}'
+
+# Mark packets on invalid ports as bad guys (block port scanning)
+ferm_mark_portscan: False
+
+# Enable/disable custom ``&log()`` ferm function used in different firewall
+# rules.
+ferm_log: True
+
+# Select how firewall performs logging. By default, it uses normal syslog
+# calls, there are other ways to log packets listed below.
+ferm_log_type: 'LOG'
+
+# Dictionary map with actual firewall rules mapped to different log types.
+ferm_log_map:
+  'LOG':   'LOG log-ip-options log-prefix "$msg"'
+  'ULOG':  'ULOG ulog-nlgroup {{ ferm_log_group }} ulog-prefix "$msg"'
+  'NFLOG': 'NFLOG nflog-group {{ ferm_log_group }} nflog-prefix "$msg"'
+
+# Firewall log target used in the ``&log()`` ferm function.
+ferm_log_target: '{{ ferm_log_map[ferm_log_type] }}'
+
+# Limit the amount of packets logged by the firewall.
+ferm_log_limit: '2/min'
+
+# Set the burst limit for the logged packets.
+ferm_log_burst: '5'
+
+# ULOG/NFLOG group used by the firewall logs.
+ferm_log_group: '32'
+
+# Include legacy firewall rules. This variable should allow for easier
+# transition to the new firewall rules in the future.
+ferm_include_legacy: True
+
+# List of iptables rules to manage, templates used by these rules are included
+# in templates/etc/ferm/ferm.d/ directory.
+# Additional variables are described below.
+ferm_rules: []
+ferm_group_rules: []
+ferm_host_rules: []
+ferm_dependent_rules: []
+
+# List of iptables INPUT rules to manage, many variables can be found in
+# template files, located in templates/etc/ferm/filter-input.d/ directory.
+# Additional variables are described below.
+ferm_input_list: []
+ferm_input_group_list: []
+ferm_input_host_list: []
+ferm_input_dependent_list: []
+
+  #- type: ''             # name of template file to use, required
+                          #   format: <type>.conf.j2
+  #  name: ''             # custom name used in rule filename, optional
+  #  dport: []            # list of destination ports to manage, required
+  #  weight: '10'         # helps with file sorting in rule directory, optional
+  #  filename: ''         # custom filename instead of a generated one, optional
+  #  delete: False/True   # delete specified rule file, optional
+
+# Set the default rule weight for rules that do not specify it.
+ferm_default_weight: '50'
+
+# Dictionary with mapping between "rule classes" and their desired weight.
+ferm_weight_map:
+  'loopback': '00'
+  'ansible-controller': '01'
+  'any-whitelist': '02'
+  'filter-icmp': '03'
+  'conntrack': '05'
+  'filter-syn': '07'
+  'any-blacklist': '09'
+  'any-ssh-whitelist': '25'
+  'any-ssh-accept': '30'
+  'any-ssh-filter': '31'
+  'any-service': '50'
+  'any-reject': '99'
+
+# List of default firewall rules defined on each host
+ferm_default_rules: '{{ ferm_rules_default_policy +
+                        ferm_rules_log +
+                        ferm_rules_hooks +
+                        ferm_rules_variables +
+                        ferm_rules_filter_loopback +
+                        ferm_rules_filter_ansible_controller +
+                        ferm_rules_filter_icmp +
+                        ferm_rules_filter_conntrack +
+                        ferm_rules_filter_syn +
+                        ferm_rules_filter_recent_badguys +
+                        ferm_rules_filter_include_legacy +
+                        ferm_rules_filter_recent_scanners +
+                        ferm_rules_filter_reject_all +
+                        ferm_rules_fail2ban +
+                        ferm_rules_forward }}'
+
+# Configure default policies for built-in iptables chains
+ferm_rules_default_policy:
+
+  - type: 'default_policy'
+    chain: 'INPUT'
+    weight: '00'
+    name: 'filter_input'
+    policy: '{{ ferm_default_policy_input }}'
+
+  - type: 'default_policy'
+    chain: 'FORWARD'
+    weight: '00'
+    name: 'filter_forward'
+    policy: '{{ ferm_default_policy_forward }}'
+
+  - type: 'default_policy'
+    chain: 'OUTPUT'
+    weight: '00'
+    name: 'filter_output'
+    policy: '{{ ferm_default_policy_output }}'
+
+# Implement custom firewall hooks
+ferm_rules_hooks:
+
+  - type: 'custom'
+    name: 'hooks'
+    weight: '00'
+    comment: 'Run custom hooks at various firewall stages'
+    rules: |
+      @hook pre   "run-parts /etc/ferm/hooks/pre.d";
+      @hook post  "run-parts /etc/ferm/hooks/post.d";
+      @hook flush "run-parts /etc/ferm/hooks/flush.d";
+
+# Provide custom variables in the firewall configuration
+ferm_rules_variables:
+
+  - type: 'custom'
+    name: 'variables'
+    weight: '00'
+    comment: 'Define custom variables available in the firewall'
+    rules: |
+      @def $domains      = ({{ ferm_domains | unique | join(" ") }});
+      @def $ipv4_enabled = {{ "1" if "ip"  in ferm_domains else "0" }};
+      @def $ipv6_enabled = {{ "1" if "ip6" in ferm_domains else "0" }};
+
+# Create custom log function which is used by other firewall rules to log
+# packets.
+ferm_rules_log:
+
+  - type: 'custom'
+    name: 'log'
+    weight: '00'
+    comment: 'Custom log function used by other rules'
+    when: '{{ ferm_log | bool }}'
+    delete: '{{ not ferm_log | bool }}'
+    rules: |
+      @def &log($msg) = {
+          mod limit limit {{ ferm_log_limit }}
+                    limit-burst {{ ferm_log_burst }}
+              {{ ferm_log_target }};
+      }
+
+# Allow connections from localhost
+ferm_rules_filter_loopback:
+
+  - type: 'accept'
+    weight: '00'
+    weight_class: 'loopback'
+    name: 'loopback'
+    interface: 'lo'
+
+# Allow connections from Ansible Controllers
+ferm_rules_filter_ansible_controller:
+
+  - type: 'ansible_controller'
+    weight: '01'
+    weight_class: 'ansible-controller'
+    comment: 'Accept SSH connections from Ansible Controllers'
+    name: 'rules'
+    dport: '{{ ferm_ansible_controllers_ports }}'
+    multiport: True
+    accept_any: False
+
+# Filter ICMP packets
+ferm_rules_filter_icmp:
+
+  - type: 'hashlimit'
+    weight: '03'
+    weight_class: 'filter-icmp'
+    name: 'icmp-flood'
+    protocol: 'icmp'
+    enabled: '{{ ferm_filter_icmp | bool }}'
+    hashlimit: '{{ ferm_filter_icmp_limit }}'
+    hashlimit_burst: '{{ ferm_filter_icmp_burst }}'
+    hashlimit_expire: '{{ ferm_filter_icmp_expire }}'
+    hashlimit_target: 'ACCEPT'
+    target: 'REJECT'
+
+# Enable connection tracking for incoming, forwarded and outgoing traffic.
+ferm_rules_filter_conntrack:
+
+  - type: 'connection_tracking'
+    weight: '05'
+    weight_class: 'conntrack'
+    chain: [ 'INPUT', 'OUTPUT', 'FORWARD' ]
+
+# Filter TCP SYN packets
+ferm_rules_filter_syn:
+
+  - type: 'hashlimit'
+    weight: '07'
+    weight_class: 'filter-syn'
+    name: 'syn-flood'
+    protocol: 'tcp'
+    protocol_syn: True
+    when: '{{ ferm_filter_syn | bool }}'
+    hashlimit: '{{ ferm_filter_syn_limit }}'
+    hashlimit_burst: '{{ ferm_filter_syn_burst }}'
+    hashlimit_expire: '{{ ferm_filter_syn_expire }}'
+    hashlimit_target: 'RETURN'
+    target: 'REJECT'
+
+# Block all packets marked as "badguys" later in the firewall
+ferm_rules_filter_recent_badguys:
+
+  - type: 'recent'
+    weight: '09'
+    weight_class: 'any-blacklist'
+    name: 'block-recent-badguys'
+    comment: 'Reject packets marked as "badguys"'
+    when: '{{ ferm_filter_recent | bool }}'
+    recent_name: '{{ ferm_filter_recent_name }}'
+    recent_update: True
+    recent_seconds: '{{ ferm_filter_recent_time }}'
+    recent_target: 'REJECT'
+
+  - type: 'recent'
+    weight: '09'
+    weight_class: 'any-blacklist'
+    name: 'clean-recent-badguys'
+    comment: 'Reject packets marked as "badguys"'
+    when: '{{ ferm_filter_recent | bool }}'
+    recent_name: '{{ ferm_filter_recent_name }}'
+    recent_remove: True
+    recent_log: False
+
+# Include rules from legacy ferm directory
+ferm_rules_filter_include_legacy:
+
+  - type: 'accept'
+    weight: '50'
+    weight_class: 'any-service'
+    filename: 'jump_legacy-rules'
+    comment: 'Jump to legacy firewall rules'
+    target: 'debops-legacy-input-rules'
+    when: '{{ ferm_include_legacy | bool }}'
+    delete: '{{ not ferm_include_legacy | bool }}'
+
+  - type: 'include'
+    weight: 'zz'
+    chain: 'debops-legacy-input-rules'
+    comment: 'Include legacy firewall rules'
+    name: 'legacy-input-rules'
+    include: '/etc/ferm/filter-input.d/'
+    when: '{{ ferm_include_legacy | bool }}'
+    delete: '{{ not ferm_include_legacy | bool }}'
+
+# Block potential port scanners that try to access closed ports
+ferm_rules_filter_recent_scanners:
+
+  - type: 'recent'
+    weight: '85'
+    name: 'block-portscans'
+    comment: 'Mark potential port scanners as bad guys'
+    recent_set_name: '{{ ferm_filter_recent_name }}'
+    when: '{{ ferm_mark_portscan | bool }}'
+    delete: '{{ not ferm_mark_portscan | bool }}'
+
+# Reject all incoming packets not handled by previous rules
+ferm_rules_filter_reject_all:
+
+  - type: 'reject'
+    weight: '99'
+    weight_class: 'any-reject'
+
+# fail2ban support rules for ferm
+ferm_rules_fail2ban:
+
+  - type: 'fail2ban'
+    weight: 'zz'
+    comment: 'Reload fail2ban rules'
+    when: '{{ ferm_fail2ban | bool }}'
+    delete: '{{ not ferm_fail2ban | bool }}'
+
+# Manage packet forwarding to other hosts/containers
+ferm_rules_forward:
+
+  - chain: 'FORWARD'
+    type: 'accept'
+    interface_present: '{{ ferm_external_interfaces }}'
+    weight: '10'
+    role: 'forward'
+    role_weight: '10'
+    name: 'external_in'
+    comment: 'Forward incoming traffic to other hosts'
+    when: '{{ (ferm_forward | bool or
+               (ansible_local|d() and ansible_local.ferm|d() and
+                ansible_local.ferm.forward | bool)) }}'
+    delete: '{{ (not ferm_forward | bool and
+                 (ansible_local|d(True) and (ansible_local.ferm is undefined or
+                   (ansible_local.ferm.forward is undefined or
+                    not ansible_local.ferm.forward | bool)))) }}'
+
+  - chain: 'FORWARD'
+    type: 'accept'
+    outerface_present: '{{ ferm_external_interfaces }}'
+    weight: '10'
+    role: 'forward'
+    role_weight: '20'
+    name: 'external_out'
+    comment: 'Forward outgoing traffic to other hosts'
+    when: '{{ (ferm_forward | bool or
+               (ansible_local|d() and ansible_local.ferm|d() and
+                ansible_local.ferm.forward | bool)) }}'
+    delete: '{{ (not ferm_forward | bool and
+                 (ansible_local|d(True) and (ansible_local.ferm is undefined or
+                   (ansible_local.ferm.forward is undefined or
+                    not ansible_local.ferm.forward | bool)))) }}'
+
+  - chain: 'FORWARD'
+    type: 'accept'
+    interface_present: '{{ ferm_internal_interfaces }}'
+    outerface_present: '{{ ferm_internal_interfaces }}'
+    weight: '10'
+    role: 'forward'
+    role_weight: '30'
+    name: 'internal'
+    comment: 'Forward internal traffic between hosts'
+    when: '{{ (ferm_forward | bool or
+               (ansible_local|d() and ansible_local.ferm|d() and
+                ansible_local.ferm.forward | bool)) }}'
+    delete: '{{ (not ferm_forward | bool and
+                 (ansible_local|d(True) and (ansible_local.ferm is undefined or
+                   (ansible_local.ferm.forward is undefined or
+                    not ansible_local.ferm.forward | bool)))) }}'
+
+# Enable or disable fail2ban integration. ferm will send fail2ban reload
+# command after its own configuration is reloaded. If fail2ban is not present
+# or turned off, nothing will happen.
+ferm_fail2ban: True
+
+# Enable forwarding in ip(6)tables. This option can be used by other roles and
+# its status is saved in Ansible local facts, which will override variable
+# status from role defaults or inventory.
+ferm_forward: False
+
+# List of interfaces that are connected to external network, traffic on these
+# interfaces will be forwarded to all hosts
+ferm_external_interfaces:
+  - '{{ ansible_default_ipv4.interface | default("") }}'
+  - '{{ ansible_default_ipv6.interface | default("") }}'
+
+# List of interfaces that are connected to internal network, traffic on these
+# interfaces will be forwarded only between hosts on that network
+ferm_internal_interfaces: [ 'br1' ]
+
+# List of global root flags to check
+ferm_root_flags:
+
+  # If these flags are present, ignore status of "cap_net_admin" capability and
+  # manage firewall using ferm
+  cap_net_admin: [ 'ignore-cap12s', 'ignore-cap_net_admin' ]
+

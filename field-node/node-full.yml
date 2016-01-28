@@ -1,0 +1,6 @@
+- hosts: nodes
+
+- include: node-samba.yml
+- include: node-base.yml
+- include: node-users.yml
+- include: node-tunnel.yml
