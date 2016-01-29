@@ -1,5 +1,8 @@
 - hosts: nodes
 
+  tasks:
+    - debug: msg="Configuring field node..."
+
 - include: node-samba.yml
 - include: node-base.yml
 - include: node-users.yml

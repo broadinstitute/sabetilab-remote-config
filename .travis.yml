@@ -22,5 +22,11 @@ env:
 script:
   - ansible-playbook --syntax-check -i test/inventory test/playbook.yml
   - ansible-playbook --syntax-check -i test/inventory management-node/manager-base.yml
+  # ansible as of 2.0.0.2 has a bug where syntax checking fails if vars_prompt is used
+  # once it has been resolved, node-full.yml or node-*.yml can be used
+  #- ansible-playbook --syntax-check -i test/inventory field-node/node-full.yml
+  - ansible-playbook --syntax-check -i test/inventory field-node/node-tunnel.yml
+  - ansible-playbook --syntax-check -i test/inventory field-node/node-users.yml
   - ansible-playbook --syntax-check -i test/inventory field-node/node-base.yml
+  - ansible-playbook --syntax-check -i test/inventory field-node/node-restart-autossh.yml
   #- ansible-playbook -i test/inventory test/playbook.yml --connection=local --sudo -vvvv
