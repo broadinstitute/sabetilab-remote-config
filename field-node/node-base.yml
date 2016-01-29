@@ -13,6 +13,9 @@
     - geerlingguy.security
 
   tasks:
+    - name: Install build dependencies
+      apt: pkg=build-essential state=installed
+
     - name: Install htop
       apt: pkg=htop state=installed
 
@@ -21,6 +24,21 @@
 
     - name: Install git
       apt: pkg=git state=installed
+
+    # If using the dual-NIC expresscard34 card with Realtek 8168
+    - name: Install dual-nic driver
+      script: ./files/install_r8168_drivers.sh
+      become: yes
+
+    # - name: Copy in service to renew DHCP lease when expresscard NIC is inserted
+    #   template: 
+    #     src: "./files/enp12s0_watcher.service.j2"
+    #     dest: "/etc/systemd/system/enp12s0_watcher.service"
+    #     mode: "0644"
+    #   register: enp12s0_service_file
+
+    # - shell: "systemctl daemon-reload && systemctl enable enp12s0_watcher"
+    #   when: enp12s0_service_file.changed
 
     - name: Install ansible
       apt: pkg=ansible state=installed

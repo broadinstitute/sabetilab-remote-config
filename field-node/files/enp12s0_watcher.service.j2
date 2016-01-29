@@ -1,0 +1,15 @@
+[Unit]
+Description=Service on interface enp12s0
+BindsTo=sys-subsystem-net-devices-enp12s0.device
+After=sys-subsystem-net-devices-enp12s0.device
+Requisite=sys-subsystem-net-devices-enp12s0.device
+
+[Service]
+#Type=oneshot
+#RemainAfterExit=yes
+ExecStartPre=/sbin/dhclient -r enp12s0
+ExecStart=/sbin/dhclient enp12s0
+
+[Install]
+WantedBy=network-online.target sys-subsystem-net-devices-enp12s0.device
+Alias=niccard.service
