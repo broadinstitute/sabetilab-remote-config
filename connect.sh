@@ -40,6 +40,6 @@ echo "Note: a live reverse tunnel must be present between '$NODE_DOMAIN' and '$R
 echo "      binding the SSH port of '$NODE_DOMAIN' to the local port '$PORT_ON_RELAY' on '$RELAY_DOMAIN.'"
 echo ""
 
-echo "ssh -o StrictHostKeyChecking=no -o ProxyCommand=\"ssh -W %h:%p $CONNECT_USERNAME@$MANAGER_IP\" localhost -p $PORT_ON_RELAY"
-ssh -o StrictHostKeyChecking=no -o ProxyCommand="ssh -W %h:%p $CONNECT_USERNAME@$MANAGER_IP" localhost -p "$PORT_ON_RELAY"
+echo "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR -o ProxyCommand=\"ssh -W %h:%p $CONNECT_USERNAME@$MANAGER_IP\" localhost -p $PORT_ON_RELAY"
+ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR -o ProxyCommand="ssh -W %h:%p $CONNECT_USERNAME@$MANAGER_IP" localhost -p "$PORT_ON_RELAY"
 

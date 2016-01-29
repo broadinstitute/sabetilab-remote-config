@@ -55,7 +55,7 @@
     #   become: yes
     #   ignore_errors: true
 
-    - name: wait for DNS change bearing new port to propagate
+    - name: wait for DNS change bearing new port to propagate to AWS nameserver
       local_action: wait_for timeout=50
 
     - name: get new port from DNS
