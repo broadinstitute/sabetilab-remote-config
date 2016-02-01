@@ -74,7 +74,9 @@ if __name__ == '__main__':
     if len(sys.argv) == 2 and (sys.argv[1] == '--list'):
         print(inv.grouplist())
     elif len(sys.argv) == 3 and (sys.argv[1] == '--host'):
-        print(inv.hostinfo(con, sys.argv[2]))
+        # Not implemented since we return info for all hosts in one call via --list.
+        # Using --host is slower, older, and likely to be deprecated.
+        print(inv.dump_json({}))
     else:
         print("Usage: %s --list or --host <hostname>" % sys.argv[0])
         sys.exit(1)

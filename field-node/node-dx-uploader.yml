@@ -1,0 +1,11 @@
+- hosts: nodes
+  vars_files:
+    - "../settings_field_node.yml"
+  vars:
+    sync_directory: '/srv/samba/home/miseq'
+
+  roles: 
+    - dnanexus.uploader
+
+  tasks:
+    - debug: msg="Configuring DNAnexus uploader..."

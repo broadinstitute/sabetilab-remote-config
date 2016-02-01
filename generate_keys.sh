@@ -8,6 +8,8 @@ GITHUB_KEY_PREFIX="github_deploy_read_only_id_rsa"
 
 echo $KEY_DIRECTORY
 
+mkdir -p $KEY_DIRECTORY
+
 echo "Generating SSH keys (this may take a moment)..."
 
 # generate autossh tunnel keys and save to ./files/
