@@ -24,7 +24,7 @@
       user: 
         name: "{{ samba_username }}"
         comment: "samba user for shared data directory" 
-        shell: /bin/false
+        shell: /usr/sbin/nologin
 
     - name: set samba user password
       shell: "(echo {{ samba_username }}; echo {{ samba_username }}) | smbpasswd -s -a {{ samba_user_password }}"
