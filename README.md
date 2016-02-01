@@ -113,9 +113,13 @@ Or for one node:
 
 `ansible node-3 -i dynamic-inventory.py [--sudo --ask-sudo-pass] -m shell -a "some_command"`
 
-To run a playbook on the nodes:
+To run a playbook on all nodes:
 
 `ansible-playbook -i dynamic-inventory.py [--sudo --ask-sudo-pass] some-playbook.yml`
+
+To run a playbook on one node:
+
+`ansible-playbook --limit node-3 -i dynamic-inventory.py [--sudo --ask-sudo-pass] some-playbook.yml`
 
 To reboot all nodes:
 
