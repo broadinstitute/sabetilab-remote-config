@@ -1,0 +1,36 @@
+- hosts: nodes
+  vars_files:
+    - "../settings_field_node.yml"
+  vars:
+    samba_shares: []
+    samba_service_names: ['smbd','nmbd']
+    samba_default_globals:
+      browseable: 'no'
+
+  vars_prompt:
+    - name: "samba_username"
+      prompt: "Enter samba username"
+      private: no
+
+    - name: "samba_user_password"
+      prompt: "Enter samba user password"
+      private: yes
+
+  roles: 
+    - debops.samba
+
+  tasks:
+    - name: add samba user for shared data directory
+      user: 
+        name: "{{ samba_username }}"
+        comment: "samba user for shared data directory" 
+        shell: /usr/sbin/nologin
+
+    - name: set samba user password
+      shell: "(echo {{ samba_username }}; echo {{ samba_username }}) | smbpasswd -s -a {{ samba_user_password }}"
+
+    - name: restart samba services
+      service: 
+        name: "{{ item }}" 
+        state: "restarted"
+      with_items: "{{ samba_service_names }}"

@@ -1,0 +1,42 @@
+- hosts: nodes
+
+  environment:
+    PLACEHOLDER_VAR: "foobar"
+
+  vars_files:
+    - "../settings_field_node.yml"
+
+  tasks:
+    - name: "add users (local, no keys)"
+      user: "name={{item|quote}} shell=/bin/bash"
+      with_items: "{{local_usernames_with_access}}"
+
+    - name: "add users with sudo access (local, no keys)"
+      user: "name={{item|quote}} group=sudo shell=/bin/bash" # use "admin" for Ubuntu <11.10, and "sudo" for later
+      with_items: "{{local_usernames_with_sudo_access}}"
+
+    - name: "add users (github usernames)"
+      user: "name={{item|quote}} shell=/bin/bash"
+      with_items: "{{ github_usernames_with_access}}"
+
+    - name: "add users with sudo access (github usernames)"
+      user: "name={{item|quote}} group=sudo shell=/bin/bash" # use "admin" for Ubuntu <11.10, and "sudo" for later
+      with_items: "{{github_usernames_with_sudo_access}}"
+
+    - name: add ssh keys for users from GitHub
+      authorized_key: "user={{item|quote}} key=https://github.com/{{item}}.keys"
+      with_items: "{{github_usernames_with_access}}"
+
+    - name: add ssh keys for sudoers from GitHub
+      authorized_key: "user={{item|quote}} key=https://github.com/{{item}}.keys"
+      with_items: "{{github_usernames_with_sudo_access}}"
+
+    - name: Copy in password clearing script
+      template: 
+        src: "../files/clear_and_expire_password.sh" 
+        dest: "/opt/field-node/clear_and_expire_password.sh"
+        mode: "0744"
+
+    - name: Clear and expire passwords so users are promped at first login
+      command: "/opt/field-node/clear_and_expire_password.sh {{item}}"
+      with_items: "{{ local_usernames_with_access + local_usernames_with_sudo_access + github_usernames_with_access + github_usernames_with_sudo_access }}"

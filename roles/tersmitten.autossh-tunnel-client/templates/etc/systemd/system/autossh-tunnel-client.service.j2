@@ -1,0 +1,22 @@
+[Unit]
+Description=Set up a persistent tunnel (using autossh)
+Documentation=man:autossh(1)
+After=network-online.target sshd.service local-fs.target getty@tty1.service
+Requires=network-online.target sshd.service
+BindsTo=network-online.target
+
+[Service]
+StandardOutput=kmsg+console
+Type=simple
+PIDFile=/var/run/autossh/autossh-tunnel-client.pid
+
+Restart=on-failure
+RestartSec=60
+
+ExecStartPre=/usr/bin/test -x /usr/bin/autossh
+ExecStartPre=/bin/mkdir -p -m0755 /var/run/autossh
+ExecStart=/opt/start-autossh.sh
+
+[Install]
+WantedBy=multi-user.target
+Alias=autossh.service

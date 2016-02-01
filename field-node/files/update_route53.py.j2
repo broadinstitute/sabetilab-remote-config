@@ -1,0 +1,134 @@
+#!/usr/bin/python
+
+# based on: https://gist.github.com/vrypan/4341878
+
+import io, os, sys, re
+import subprocess
+import socket
+from datetime import datetime
+
+# set the AWS vars before we import boto
+os.environ["AWS_ACCESS_KEY_ID"] = "{{aws_access_key_id}}"
+os.environ["AWS_SECRET_ACCESS_KEY"] = "{{aws_secret_access_key}}"
+
+from area53 import route53
+from boto.route53.exception import DNSServerError
+import requests
+
+import dns.resolver #dnspython
+
+domain_name = '{{domain_name}}'
+subdomain_name = socket.gethostname()
+remote_port_file = "{{ autossh_tunnel_client_autossh_remote_port_file }}" #"/var/run/autossh/autossh-remote-listen-port"
+
+def read_remote_port_from_file(port_file_path):
+    port_file_path = os.path.realpath(os.path.expanduser(port_file_path))
+
+    port_num = None
+
+    if os.path.exists(port_file_path):
+        with open(port_file_path,"r") as portfile:
+            last_line = ""
+            for line in portfile:
+                current_line = line.strip().replace("\n", "").replace("\r", "")
+                if len(current_line):
+                    last_line = current_line
+
+            if len(last_line):
+                port_num = last_line
+
+    if not port_num:
+        port_num = "{{ ssh_tunnel_port | default(32000) }}"
+
+    return port_num
+
+def get_public_ip():
+    # equivalent to:
+    # dig TXT +short o-o.myaddr.l.google.com @ns1.google.com | awk -F'"' '{ print $2}'
+    resolver = dns.resolver.Resolver()
+    resolver.nameservers=[ socket.gethostbyname('ns1.google.com') ]
+    return str(resolver.query('o-o.myaddr.l.google.com', 'TXT')[0]).replace('"','')
+
+def get_txt_rec(domain_name):
+    resolver = dns.resolver.Resolver()
+    resolver.nameservers=[ socket.gethostbyname('ns-491.awsdns-61.com') ]
+    return str(resolver.query(domain_name, 'TXT')[0]).replace('"','')
+
+def get_port(domain_name):
+    txt_record = get_txt_rec(domain_name)
+    port_num_matches = re.findall('^P(\d+);.*', txt_record)
+    port_num = ""
+    if len(port_num_matches) > 0:
+        port_num = port_num_matches[0]
+
+    return port_num
+
+def update_dns(subdomain, domain, new_ip, new_port):
+    fqdn = '%s.%s' % (subdomain, domain)
+    zone = route53.get_zone(domain)
+    a_record = zone.get_a(fqdn)
+
+    old_port = get_port(fqdn)
+
+    datestr = '"P%s; Last update %s."' % (new_port, datetime.utcnow().strftime('%Y-%m-%d %H:%M'))
+
+    if a_record:
+            old_ip = a_record.resource_records[0]
+
+            if old_ip == new_ip and old_port == new_port:
+                    if sys.stdin.isatty():
+                        print('%s is current. (%s)' % (fqdn, new_ip))
+                    sys.exit(0)
+
+            if old_ip != new_ip:
+                try:
+                    if sys.stdin.isatty():
+                        print('Updating %s: %s -> %s' % (fqdn, old_ip, new_ip))
+                    zone.update_a(fqdn, new_ip, 900)
+                except DNSServerError:
+                    # create the record
+                    zone.add_a(fqdn, new_ip, 900)
+
+            if old_port != new_port:
+                try:
+                    if sys.stdin.isatty():
+                        print('Updating port for %s: %s -> %s' % (fqdn, old_port, new_port))
+                    zone.update_txt(fqdn, datestr, 900)
+                except DNSServerError:
+                    # create the record
+                    zone.add_txt(fqdn, datestr, 900)
+
+    else:
+            zone.add_a(fqdn, new_ip, 900)
+            zone.add_txt(fqdn, datestr, 900)
+
+if __name__ == "__main__":
+    new_ip = get_public_ip()
+
+    # if this is piped input, use the port numbers piped in
+    # also have to check if it is a subprocess by examining an argv we pass in
+    if not sys.stdin.isatty() and "is_subprocess" not in sys.argv:
+        # py2 buffers lines and waits for EOF
+        # however since autossh is a long-running process
+        # we need to deal with its output as a stream via the io module
+        for line in io.open(sys.stdin.fileno()):
+            line = line.strip().replace("\n","").replace("\r","")
+            if len(line):
+                new_port = ""
+                new_port_matches = re.findall('Allocated port ([0-9]+) for remote forward to.*', line)
+                if len(new_port_matches):
+                    new_port = new_port_matches[0]
+                if len(new_port):
+                    #Write the port to a file
+                    with open(remote_port_file, "wb") as pfile:
+                        pfile.write(new_port+"\n")
+
+                    # spawn a subprocess to update the DNS record
+                    dns_change_output = subprocess.check_output(['python', os.path.realpath(__file__), "is_subprocess"])
+                    print(dns_change_output)
+                    #update_dns(subdomain_name, domain_name, new_ip, new_port)
+                print(line)
+    # otherwise use the port number from the file
+    else:
+        new_port = read_remote_port_from_file(remote_port_file)
+        update_dns(subdomain_name, domain_name, new_ip, new_port)

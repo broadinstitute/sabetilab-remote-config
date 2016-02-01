@@ -1,0 +1,99 @@
+# tasks file for autossh-tunnel-client
+---
+- name: install package
+  apt:
+    name: autossh
+    state: latest
+    update_cache: true
+    cache_valid_time: 3600
+  tags: [configuration, autossh-tunnel-client, autossh-tunnel-client-install]
+
+- name: create required directories
+  file:
+    path: "{{ item.dest }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "{{ item.mode }}"
+  with_items:
+    - dest: "{{ autossh_tunnel_client_configuration_directory }}"
+      mode: '0700'
+    - dest: "{{ autossh_tunnel_client_autossh_pidfile | dirname }}"
+      mode: '0755'
+  tags:
+    - configuration
+    - autossh-tunnel-client
+    - autossh-tunnel-client-configuration
+    - autossh-tunnel-client-configuration-directories
+
+- name: create autossh startup script
+  template:
+    src: opt/start-autossh.sh.j2
+    dest: /opt/start-autossh.sh
+    owner: root
+    group: root
+    mode: 0744
+  notify: restart autossh-tunnel-client
+
+- name: create autossh restart script
+  template:
+    src: opt/restart-autossh.sh.j2
+    dest: /opt/restart-autossh.sh
+    owner: root
+    group: root
+    mode: 0744
+  notify: restart autossh-tunnel-client
+
+- name: copy key file(s)
+  copy:
+    src: "{{ item.src }}"
+    dest: "{{ autossh_tunnel_client_configuration_directory }}/{{ item.dest | default(item.src | basename) }}"
+    owner: "{{ item.owner | default('root') }}"
+    group: "{{ item.group | default(item.owner) | default('root') }}"
+    mode: "{{ item.mode | default('0600') }}"
+  with_items: autossh_tunnel_client_key_map
+  notify: restart autossh-tunnel-client
+  tags:
+    - configuration
+    - autossh-tunnel-client
+    - autossh-tunnel-client-configuration
+    - autossh-tunnel-client-configuration-keys
+
+- name: create init script (upstart)
+  template:
+    src: etc/init/autossh-tunnel-client.conf.j2
+    dest: /etc/init/autossh-tunnel-client.conf
+    owner: root
+    group: root
+    mode: 0644
+  notify: restart autossh-tunnel-client
+  tags:
+    - configuration
+    - autossh-tunnel-client
+    - autossh-tunnel-client-configuration
+    - autossh-tunnel-client-configuration-init
+
+- name: create init script (systemd)
+  template:
+    src: etc/systemd/system/autossh-tunnel-client.service.j2
+    dest: /etc/systemd/system/autossh-tunnel-client.service
+    owner: root
+    group: root
+    mode: 0644
+  register: autossh_service_file
+  notify: restart autossh-tunnel-client
+  tags:
+    - configuration
+    - autossh-tunnel-client
+    - autossh-tunnel-client-configuration
+    - autossh-tunnel-client-configuration-init
+
+- shell: systemctl daemon-reload
+  when: autossh_service_file.changed
+
+- name: start and enable service
+  service:
+    name: autossh-tunnel-client
+    state: started
+    enabled: yes
+  tags: [configuration, autossh-tunnel-client, autossh-tunnel-client-start-enable-service]

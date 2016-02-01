@@ -1,0 +1,17 @@
+#!/bin/bash
+
+export AUTOSSH_DEBUG={{ autossh_tunnel_client_autossh_debug }}
+export AUTOSSH_FIRST_POLL={{ autossh_tunnel_client_autossh_first_poll }}
+export AUTOSSH_GATETIME={{ autossh_tunnel_client_autossh_gatetime }}
+export AUTOSSH_LOGLEVEL={{ autossh_tunnel_client_autossh_loglevel }}
+export AUTOSSH_PIDFILE={{ autossh_tunnel_client_autossh_pidfile }}
+export AUTOSSH_POLL={{ autossh_tunnel_client_autossh_poll }}
+
+# If a remote port is specified, write out the port number to {{ autossh_tunnel_client_autossh_remote_port_file }} 
+
+{% if autossh_remote_port_stdin_receiver %}
+sleep 5 && /usr/bin/autossh -M 0 -4 -N -R {{ autossh_tunnel_client_forward }} {{ autossh_tunnel_client_user }}@{{ autossh_tunnel_client_host }} -p {{ autossh_tunnel_client_port }} -i {{ autossh_tunnel_client_configuration_directory }}/{{ autossh_tunnel_client_identity }} {% for ssh_options in autossh_tunnel_client_ssh_options %} -o "{{ ssh_options }}" {% endfor %} 2>&1 | {{ autossh_remote_port_stdin_receiver }}
+{% else %}
+/usr/bin/autossh -M 0 -4 -N -R {{ autossh_tunnel_client_forward }} {{ autossh_tunnel_client_user }}@{{ autossh_tunnel_client_host }} -p {{ autossh_tunnel_client_port }} -i {{ autossh_tunnel_client_configuration_directory }}/{{ autossh_tunnel_client_identity }} {% for ssh_options in autossh_tunnel_client_ssh_options %} -o "{{ ssh_options }}" {% endfor %} |& sed -rn -u  's/^Allocated port ([[:digit:]]+) for remote forward to.*$/\1/p' > {{ autossh_tunnel_client_autossh_remote_port_file }}
+{% endif %}
+

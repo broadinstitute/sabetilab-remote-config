@@ -1,0 +1,13 @@
+# handlers file for autossh-tunnel-client
+---
+#- name: restart autossh-tunnel-client
+#  command: "/opt/restart-autossh.sh"
+
+- name: restart autossh-tunnel-client
+  command: service autossh-tunnel-client restart
+  when: not skip_autossh_restart_handler
+  # perhaps the service module can  be used again when it does not fail
+  #service:
+  #  name: autossh-tunnel-client
+  #  pattern: autossh
+  #  state: restarted
