@@ -101,9 +101,13 @@ To issue ad hoc commands to the management node, ensure the address is listed in
 
 To run a playbook on the management node:
 
-`ansible-playbook -i ./production [--sudo --ask-sudo-pass]some-playbook.yml`
+`ansible-playbook -i ./production [--sudo --ask-sudo-pass] some-playbook.yml`
 
 ### field node
+
+Before running remote Ansible commands on the nodes, make sure you can connect to each of the nodes and have set your password (sudoers only). Sudoers will be prompted to set their password upon first connect:
+
+`./connect.sh node-name.example.com [github_username]`
 
 To issue one-off ansible commands to the nodes:
 
