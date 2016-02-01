@@ -81,6 +81,10 @@ On each field node, run:
 
 `sudo ./setup_field_node_local.sh`
 
+#### Samba shares
+
+As part of the setup process, a samba/CIFS user will be created (ex. "miseq", or whatever you specify when prompted) on the field node. A shared directory for this user will be created on the field node upon first log-in by the user, located at `/srv/samba/home/<samba_username>`.
+
 ## Making changes
 
 ### management node
@@ -176,7 +180,12 @@ If the field node is behind NAT or a firewall that blocks inbound SSH connection
 
 Since the tunnel port on the manager varies, the helper script identifies the correct port by examining a note published as part of the DNS TXT record for the node.
 
-**Note:** Manually changing the system configuration of the field nodes is discouraged. Ideally all changes to the field nodes should be encapsulated as version-controlled ansible playbooks for repeatability.
+**Node:** If the private key files for the public keys published by github are not named according to a pattern normally searched by ssh (`id_rsa`, etc.), you will need to add an entry to `~/.ssh/config` to specify the correct key file for the domain name specified in `settings_manager.yml`. Ex.
+
+    Host *.example.com
+        IdentityFile ~/.ssh/my_id_rsa
+
+**Note 2:** Manually changing the system configuration of the field nodes is discouraged. Ideally all changes to the field nodes should be encapsulated as version-controlled ansible playbooks for repeatability.
 
 You can connect to the manager node directly, and then connect to the correct port at localhost on the management node (keys will need to be present on the manager and field nodes):
 
