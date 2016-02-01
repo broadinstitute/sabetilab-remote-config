@@ -101,7 +101,7 @@ To issue ad hoc commands to the management node, ensure the address is listed in
 
 To run a playbook on the management node:
 
-`ansible-playbook -i ./production [--sudo --ask-sudo-pass]some-playbook.yml`
+`ansible-playbook -i ./production [--sudo --ask-sudo-pass] some-playbook.yml`
 
 ### field node
 

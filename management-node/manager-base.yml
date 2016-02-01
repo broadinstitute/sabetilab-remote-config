@@ -72,11 +72,11 @@
       with_items: "{{github_usernames_with_sudo_access}}"
 
     - name: "Configure resolvconf to search domain_name from settings"
-      sudo: yes
+      become: yes
       lineinfile: "dest=/etc/resolvconf/resolv.conf.d/base line='search {{domain_name}}'"
 
     - name: Update resolvconf
-      sudo: yes
+      become: yes
       command: resolvconf -u
 
     - name: "Add subdomain from settings to /etc/hosts"
