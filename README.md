@@ -105,6 +105,10 @@ To run a playbook on the management node:
 
 ### field node
 
+Before running remote Ansible commands on the nodes, make sure you can connect to each of the nodes and have set your password (sudoers only). Sudoers will be prompted to set their password upon first connect:
+
+`./connect.sh node-name.example.com [github_username]`
+
 To issue one-off ansible commands to the nodes:
 
 `ansible nodes -i dynamic-inventory.py [--sudo --ask-sudo-pass] -m shell -a "some_command"`
