@@ -14,13 +14,15 @@ with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "settings_ma
 class AnsibleInventory(object):
     domain  = settings_object["domain_name"] #"sabeti-aws.net"
     manager_domain = "manager." + domain
+    username = settings_object["username"]
 
     inventory = {
         "nodes"   : {
             "hosts"   : settings_object["connected_nodes"],
             "vars"    : {
-                "ansible_ssh_common_args": '-o ProxyCommand="ssh -W %h:%p {manager}"'.format(manager=manager_domain),
+                "ansible_ssh_common_args": '-o ProxyCommand="ssh -W %h:%p {user}@{manager}"'.format(user=username, manager=manager_domain),
                 "ansible_host"           : "localhost",
+                "ansible_user"           : "{user}".format(user=username),
                 "ssh_port"               : "6112"
             }
         },
