@@ -13,7 +13,7 @@
       - src: "../keys/{{autossh_tunnel_client_identity}}"
     autossh_tunnel_client_host: "{{ manager_domain_name }}"
     autossh_tunnel_client_forward: '{{ ssh_tunnel_port | default(0) }}:127.0.0.1:{{ ssh_port }}'
-    autossh_remote_port_stdin_receiver: "/opt/field-node/update_route53.py"
+    autossh_output_script: "/opt/field-node/update_route53.py"
     skip_autossh_restart_handler: true
 
   roles:
