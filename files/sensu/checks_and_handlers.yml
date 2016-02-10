@@ -1,20 +1,73 @@
 sensu_checks:
-  test_check:
+  autossh_client: 
     handler    : default
-    command    : "/bin/sh -c 'echo Hello World'"
+    command    : "/etc/sensu/plugins/check-for-process.rb autossh"
     interval   : 60
     subscribers:
       - "node"
 
-  autossh_client: 
+  samba_daemon: 
     handler    : default
-    command    : "/etc/sensu/plugins/check-for-autossh-process.rb"
+    command    : "/etc/sensu/plugins/check-for-process.rb smbd"
     interval   : 60
     subscribers:
       - "node"
+
+  netbios_daemon: 
+    handler    : default
+    command    : "/etc/sensu/plugins/check-for-process.rb nmbd"
+    interval   : 60
+    subscribers:
+      - "node"
+
+  uptime: 
+    handler    : default
+    type       : metric
+    command    : "ruby /var/lib/gems/2.1.0/gems/sensu-plugins-uptime-checks-*/bin/metrics-uptime.rb" 
+    interval   : 60
+    subscribers:
+      - "node"
+
+  temperatures: 
+    handler    : default # should be graphite_line_tcp handler for plotting
+    type       : metric
+    command    : "ruby /var/lib/gems/2.1.0/gems/sensu-plugins-environmental-checks-*/bin/metrics-temperature.rb"
+    interval   : 120
+    subscribers:
+      - "node"
+
+  net_metrics: 
+    handler    : default # should be graphite_line_tcp handler for plotting
+    type       : metric
+    command    : "ruby /var/lib/gems/2.1.0/gems/sensu-plugins-network-checks-*/bin/metrics-net.rb"
+    interval   : 20
+    subscribers:
+      - "node"
+
+  # net_ping: 
+  #   handler    : default # should be graphite_line_tcp handler for plotting
+  #   type       : metric
+  #   command    : "ruby /var/lib/gems/2.1.0/gems/sensu-plugins-network-checks-*/bin/metrics-ping.rb -h {{subdomain_name}}.{{domain_name}}"
+  #   interval   : 60
+  #   subscribers:
+  #     - "node"
+
+  # ruby gem dir:
+  #  $(gem env gemdir)
 
 # Dummy sensu_handlers
 sensu_handlers:
   default:
     type   : pipe
     command: "cat"
+
+  graphite_line_tcp:
+    type: "tcp"
+    socket: 
+      host: "127.0.0.1"
+      port: 2003
+    mutator: "graphite"
+
+sensu_mutators:
+  graphite:
+    command: "ruby /etc/sensu/mutators/graphite.rb"

@@ -38,3 +38,13 @@
   tasks:
     - name: Install ruby
       apt: pkg=ruby state=installed
+
+    - name: Install lm-sensors
+      apt: pkg=lm-sensors state=installed
+
+    - name: Install ifstat
+      apt: pkg=ifstat state=installed
+
+    - name: Install gems
+      script: ../files/install-sensu-gems.sh
+   

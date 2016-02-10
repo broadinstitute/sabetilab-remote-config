@@ -51,6 +51,8 @@
 
     sensu_scripts_dir: "../files/sensu"
 
+    sensu_gem_location: "/etc/sensu/plugins/gems"
+
   vars_files:
     - "../settings_manager.yml"
     - "../files/sensu/checks_and_handlers.yml"
@@ -68,5 +70,23 @@
     - name: Install ruby
       apt: pkg=ruby state=installed
 
+    #- name: Create gem directory directory
+    #  file: path={{sensu_gem_location}} state=directory owner=sensu group=sensu mode=0775 recurse=yes
+
+    - name: Install lm-sensors
+      apt: pkg=lm-sensors state=installed
+
+    - name: Install ifstat
+      apt: pkg=ifstat state=installed
+
+    - name: Install gems
+      script: ../files/install-sensu-gems.sh
+
     - debug: msg="Queueing rabbitmq for restart"
       notify: restart rabbitmq-server
+
+    - debug: msg="Queueing sensu for restart"
+      notify: restart sensu server
+
+    - debug: msg="Queueing uchiwa for restart"
+      notify: restart uchiwa service
