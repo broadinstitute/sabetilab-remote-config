@@ -1,4 +1,4 @@
-- hosts: all
+- hosts: managers
   environment:
     PLACEHOLDER_VAR: "foobar"
   vars:
@@ -96,6 +96,3 @@
         owner: root 
         group: root 
         mode: 0644
-
-
-

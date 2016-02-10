@@ -1,0 +1,19 @@
+#!/bin/bash
+
+# chkconfig: 345 90 90
+# description: Sensu monitoring framework api
+
+### BEGIN INIT INFO
+# Provides:       sensu-api
+# Required-Start: $remote_fs $network
+# Required-Stop:  $remote_fs $network
+# Should-Start:   redis-server
+# Should-Stop:    redis-server
+# Default-Start:  2 3 4 5
+# Default-Stop:   0 1 6
+# Description:    Sensu monitoring framework api
+### END INIT INFO
+
+/etc/init.d/sensu-service api $1
+
+exit $?

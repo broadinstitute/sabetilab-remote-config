@@ -8,39 +8,43 @@ Vagrant.configure(2) do |config|
   config.ssh.username = 'ubuntu'
   config.vm.hostname = 'manager'
 
-  # depends on: vagrant-aws, vagrant-aws-route53
-  config.vm.provider :aws do |aws, override|
-    aws.access_key_id             = settings["aws_access_key_id"]
-    aws.secret_access_key         = settings["aws_secret_access_key"]
+  config.vm.define "manager" do |manager|
+    # depends on: vagrant-aws, vagrant-aws-route53
+    manager.vm.provider :aws do |aws, override|
+      aws.access_key_id             = settings["aws_access_key_id"]
+      aws.secret_access_key         = settings["aws_secret_access_key"]
 
-    # ubuntu AMI, see: https://cloud-images.ubuntu.com/locator/ec2/
-    # wily 15.10, amd64 hvm:ebs @ eu-west-1    
-    aws.ami                       = settings["ami_id"]
-    aws.instance_ready_timeout    = 180 # default: 120
-    aws.region                    = settings["ec2_region"]
-    aws.instance_type             = settings["ec2_instance_type"]
-    aws.keypair_name              = settings["aws_keypair_name"]
+      # ubuntu AMI, see: https://cloud-images.ubuntu.com/locator/ec2/
+      # wily 15.10, amd64 hvm:ebs @ eu-west-1    
+      aws.ami                       = settings["ami_id"]
+      aws.instance_ready_timeout    = 180 # default: 120
+      aws.region                    = settings["ec2_region"]
+      aws.instance_type             = settings["ec2_instance_type"]
+      aws.keypair_name              = settings["aws_keypair_name"]
 
-    override.vm.synced_folder ".", "/vagrant", disabled: true
+      override.vm.synced_folder ".", "/vagrant", disabled: true
 
-    override.route53.hosted_zone_id = settings["aws_hosted_zone_id"]
-    override.route53.record_set     = [settings["subdomain_name"]+"."+settings["domain_name"]+".", 'A'] # literal notation: %w(manager.sabeti-aws.net. A)
+      override.route53.hosted_zone_id = settings["aws_hosted_zone_id"]
+      override.route53.record_set     = [settings["subdomain_name"]+"."+settings["domain_name"]+".", 'A'] # literal notation: %w(manager.sabeti-aws.net. A)
 
-    override.ssh.username = "ubuntu"
-    override.ssh.private_key_path = settings["aws_ec2_private_key_path"]
+      override.ssh.username = "ubuntu"
+      override.ssh.private_key_path = settings["aws_ec2_private_key_path"]
 
-    override.vm.provision "ansible" do |ansible|
-      ansible.playbook = "manager-base.yml"
-      #ansible.verbose = "vvvv" # for verbose ansible output
-      #ansible.inventory_path = "../production"
-      ansible.extra_vars = {
-        ansible_ssh_user: "ubuntu",
-      }
-      ansible.extra_vars["github_usernames_with_access"] = settings["github_usernames_with_access"]
-      ansible.extra_vars["github_usernames_with_sudo_access"] = settings["github_usernames_with_sudo_access"]
-      ansible.extra_vars["domain_name"] = settings["domain_name"]
-      ansible.extra_vars["subdomain_name"] = settings["subdomain_name"]
+      override.vm.provision "ansible" do |ansible|
+        ansible.playbook = "manager-base.yml"
+        ansible.groups = {
+          "managers" => ["manager"]
+        }
+        #ansible.verbose = "vvvv" # for verbose ansible output
+        #ansible.inventory_path = "../production"
+        ansible.extra_vars = {
+          ansible_ssh_user: "ubuntu",
+        }
+        ansible.extra_vars["github_usernames_with_access"] = settings["github_usernames_with_access"]
+        ansible.extra_vars["github_usernames_with_sudo_access"] = settings["github_usernames_with_sudo_access"]
+        ansible.extra_vars["domain_name"] = settings["domain_name"]
+        ansible.extra_vars["subdomain_name"] = settings["subdomain_name"]
+      end
     end
   end
-
 end

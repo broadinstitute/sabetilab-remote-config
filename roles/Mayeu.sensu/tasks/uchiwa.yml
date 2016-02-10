@@ -1,0 +1,20 @@
+---
+- name: install uchiwa
+  apt: name=uchiwa state=present
+
+- name: create uchiwa config file
+  template:
+    src=uchiwa.json.j2
+    dest=/etc/sensu/uchiwa.json
+    owner=sensu
+    group=sensu
+    mode=0640
+    backup=yes
+  notify:
+    - restart uchiwa service
+
+- name: Start uchiwa and make it survive a reboot
+  service:
+    name=uchiwa
+    enabled=yes
+    state=started

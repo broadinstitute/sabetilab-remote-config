@@ -1,0 +1,40 @@
+- hosts: nodes
+
+  vars_files:
+    - "../settings_field_node.yml"
+
+  vars:
+    sensu_install_client: true
+    sensu_install_server: false
+
+    sensu_cert_dir: "../keys/sensu_ssl_certs/client"
+    sensu_cert_file_name: "cert.pem"
+    sensu_key_file_name: "key.pem"
+
+    sensu_client_subscription_names:
+      - "node"
+
+    vhost_name_string: "sensu"
+
+    sensu_server_rabbitmq_port: 5671
+    sensu_server_rabbitmq_hostname: "{{manager_domain_name}}"
+    sensu_server_rabbitmq_user: "sensu"
+    sensu_server_rabbitmq_password: "placeholder"
+    sensu_server_rabbitmq_vhost: "/{{vhost_name_string}}"
+
+    #sensu_client_address:
+    #sensu_client_hostname:
+
+    sensu_scripts_dir: "../files/sensu"
+
+
+  # for Ansible < 1.9
+  # sudo: yes
+  become: yes
+  #become_user: su
+  roles:
+    - Mayeu.sensu
+
+  tasks:
+    - name: Install ruby
+      apt: pkg=ruby state=installed

@@ -1,0 +1,36 @@
+---
+- name: copy all the checks files
+  copy:
+    src: "{{sensu_scripts_dir}}/plugins/"
+    dest: /etc/sensu/plugins/
+    owner: "{{ sensu_user }}"
+    group: "{{ sensu_group }}"
+    mode: 0750
+
+- name: generate config files
+  template:
+    src: client.json.j2
+    dest: /etc/sensu/conf.d/client.json
+    owner: sensu
+    group: sensu
+    mode: 0640
+    backup: yes
+  notify:
+    - restart sensu client
+
+- name: generate config file
+  template:
+    src: transport.json.j2
+    dest: /etc/sensu/conf.d/transport.json
+    owner: sensu
+    group: sensu
+    mode: 0640
+    backup: yes
+  notify:
+    - restart sensu client
+
+- name: enable sensu-client to survive reboot
+  service:
+    name: sensu-client
+    enabled: yes
+    state: started
