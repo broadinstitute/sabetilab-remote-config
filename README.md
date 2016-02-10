@@ -53,7 +53,7 @@ Create a Route53 A record for the subdomain to be used for the management node (
 
 Create an AWS SSH key pair for accessing EC2 instances, copy the *.pem file to a known location (`~/.ssh/` is suggested), and change its permissions: `chmod 600` This key can be created via the AWS web console.
 
-Ensure the default EC2 security group permits inbound SSH connections on ports {22,6112} from anywhere.
+Ensure the default EC2 security group permits inbound SSH connections on TCP ports {22,6112} from anywhere. If you wish to use monitoring, also add TCP ports {3000,5671,5672}. The IP range for SSH and monitoring must be set to "Anywhere" (0.0.0.0), while port 3000 may be restricted as it serves the monitoring web interface (CIDR for the Broad Institute: 69.173.64.0/18).
 
 Set the values specified in `settings_manager.yml` and `settings_field_node.yml`.
 
@@ -71,6 +71,10 @@ From the local machine, deploy the manager by calling:
 
 This helper script will use Vagrant to initialize an EC2 instances which will then be configured via Ansible. It will also update the Route53 `A` record for the manager to have the correct IP address for the instance. After the manager has been set up, you will be able to connect to it directly via SSH (detailed below).
 
+To enable monitoring:
+
+`ansible-playbook -i dynamic-inventory.py --sudo --ask-sudo-pass management-node/manager-sensu.yml`
+
 ### Set up the field nodes
 
 The field nodes should be running Ubuntu 15.10 or later. Install the operating system and pick a hostname. The hostname will become the subdomain automatically given to the field node, and should match an entry found in the settings file, `settings_manager.sh`, under `connected_nodes`. Where appropriate disable suspend in the power options for each of the field nodes.
@@ -81,11 +85,19 @@ On each field node, run:
 
 `sudo ./setup_field_node_local.sh`
 
+To enable monitoring:
+
+`ansible-playbook ./field-node/node-sensu.yml -i "[nodes]localhost," --connection=local --sudo --ask-sudo-pass`
+
 #### Samba shares
 
 As part of the setup process, a samba/CIFS user will be created (ex. "miseq", or whatever you specify when prompted) on the field node. A shared directory for this user will be created on the field node upon first log-in by the user, located at `/srv/samba/home/<samba_username>`.
 
 ## Making changes
+
+To perform an `apt-get update` and `apt-get upgrade` on the management node and each of the field nodes:
+
+`ansible-playbook -i dynamic-inventory.py --sudo --ask-sudo-pass common-playbooks/update-upgrade-apt-packages.yml`
 
 ### management node
 
@@ -97,11 +109,11 @@ An EC2 instance for the management node will be created. The IP address will be 
 
 To issue ad hoc commands to the management node, ensure the address is listed in `./production`, then run:
 
-`ansible managers -i ./production -m shell -a "date"`
+`ansible managers -i ./dynamic-inventory.py -m shell -a "date"`
 
 To run a playbook on the management node:
 
-`ansible-playbook -i ./production [--sudo --ask-sudo-pass] some-playbook.yml`
+`ansible-playbook -i ./dynamic-inventory.py [--sudo --ask-sudo-pass] some-playbook.yml`
 
 ### field node
 
@@ -117,7 +129,7 @@ Or for one node:
 
 `ansible node-3 -i dynamic-inventory.py [--sudo --ask-sudo-pass] -m shell -a "some_command"`
 
-To run a playbook on all nodes:
+To run a playbook on all nodes (restricted by hosts in playbook):
 
 `ansible-playbook -i dynamic-inventory.py [--sudo --ask-sudo-pass] some-playbook.yml`
 
@@ -139,12 +151,9 @@ The following field node playbooks exist and may be used for more directed confi
 * `field-node/node-users.yml` creates users specified in `settings_field_node.yml` and adds their github keys as appropriate
 * `field-node/node-samba.yml` installs and configures samba server, adds samba user
 * `field-node/node-tunnel.yml` installs autossh and configures SSH reverse tunnel
-* `node-restart-autossh.yml` restarts the autossh daemon
+* `field-node/node-restart-autossh.yml` restarts the autossh daemon
+* `field-node/node-sensu.yml` sets up monitoring on the field node
 
-
-To reboot the field nodes:
-
-`ansible nodes -i dynamic-inventory.py --sudo --ask-sudo-pass -m shell -a "reboot"`
 
 ## Connecting to nodes
 

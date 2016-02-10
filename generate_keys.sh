@@ -29,3 +29,8 @@ ssh-keygen -t rsa -b 4096 -C "autossh_tunnel_key" -N '' -f $KEY_DIRECTORY/$AUTOS
 # echo ""
 # cat $KEY_DIRECTORY/$GITHUB_KEY_PREFIX.pub
 # echo ""
+
+
+cd $KEY_DIRECTORY && wget http://sensuapp.org/docs/0.21/tools/ssl_certs.tar -O sensu_ssl_certs.tar && tar -xvf sensu_ssl_certs.tar && rm sensu_ssl_certs.tar && mv ssl_certs sensu_ssl_certs
+
+cd sensu_ssl_certs && ./ssl_certs.sh generate

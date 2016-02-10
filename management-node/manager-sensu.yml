@@ -1,0 +1,72 @@
+- hosts: managers
+
+  vars_prompt:
+    - name: "sensu_dashboard_username"
+      prompt: "Enter sensu dashboard username"
+      private: no
+
+    - name: "sensu_dashboard_password"
+      prompt: "Enter sensu dashboard password"
+      private: yes
+
+  vars:
+    sensu_install_client: true
+    sensu_install_server: true
+
+    cert_dir: "../keys/sensu_ssl_certs"
+    rabbitmq_server_cert: "{{cert_dir}}/server/cert.pem"
+    rabbitmq_server_key: "{{cert_dir}}/server/key.pem"
+    rabbitmq_cacert: "{{cert_dir}}/sensu_ca/cacert.pem"
+    #rabbitmq_ssl: true
+
+    sensu_cert_dir: "../keys/sensu_ssl_certs/client"
+    sensu_cert_file_name: "cert.pem"
+    sensu_key_file_name: "key.pem"
+
+    sensu_client_subscription_names:
+      - "manager"
+
+    vhost_name_string: "sensu"
+
+    #sensu_server_rabbitmq_hostname: "{{manager_domain_name}}"
+    sensu_server_rabbitmq_port: 5671
+    sensu_server_rabbitmq_user: "sensu"
+    sensu_server_rabbitmq_password: "placeholder"
+    sensu_server_rabbitmq_vhost: "/{{vhost_name_string}}" # must start with a slash
+
+    rabbitmq_vhost_definitions:
+      - name:     "{{ sensu_server_rabbitmq_vhost }}"
+
+    rabbitmq_users_definitions:
+      - vhost:    "{{ sensu_server_rabbitmq_vhost }}"
+        user:     "{{ sensu_server_rabbitmq_user }}"
+        password: "{{ sensu_server_rabbitmq_password }}"
+        #node:     node_name  # Optional, defaults to "rabbit"
+        #configure_priv: "^resource.*" # Optional, defaults to ".*"
+        #read_priv: "^$" # Disallow reading.
+        #write_priv: "^$" # Disallow writing.
+
+    sensu_server_dashboard_user: "{{sensu_dashboard_username}}"
+    sensu_server_dashboard_password: "{{sensu_dashboard_password}}"
+
+    sensu_scripts_dir: "../files/sensu"
+
+  vars_files:
+    - "../settings_manager.yml"
+    - "../files/sensu/checks_and_handlers.yml"
+
+  # for Ansible < 1.9
+  # sudo: yes
+  become: yes
+  #become_user: su
+  roles:
+    - redis
+    - Mayeu.RabbitMQ
+    - Mayeu.sensu
+
+  tasks:
+    - name: Install ruby
+      apt: pkg=ruby state=installed
+
+    - debug: msg="Queueing rabbitmq for restart"
+      notify: restart rabbitmq-server

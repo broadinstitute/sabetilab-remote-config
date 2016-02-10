@@ -1,0 +1,37 @@
+---
+# Set the rabbitmq SSL address
+rabbitmq_conf_ssl_listeners_address: '0.0.0.0'
+
+# Set the rabbitmq vhost
+rabbitmq_vhost_definitions:
+  - name:     "{{ sensu_server_rabbitmq_vhost }}"
+
+rabbitmq_users_definitions:
+  - vhost:    "{{ sensu_server_rabbitmq_vhost }}"
+    user:     "{{ sensu_server_rabbitmq_user }}"
+    password: "{{ sensu_server_rabbitmq_password }}"
+
+rabbitmq_cacert :     "files/rabbitmq_cacert.pem"
+rabbitmq_server_key:  "files/rabbitmq_server_key.pem"
+rabbitmq_server_cert: "files/rabbitmq_server_cert.pem"
+
+# Sensu client variable
+sensu_client_subscription_names:
+  - test
+
+sensu_server_rabbitmq_hostname: '192.168.60.2'
+
+# Dummy sensu_checks
+sensu_checks:
+  test_check:
+    handler    : default
+    command    : "/bin/sh echo Hello World"
+    interval   : 60
+    subscribers:
+      - test
+
+# Dummy sensu_handlers
+sensu_handlers:
+  test_handler:
+    type   : pipe
+    command: "echo"

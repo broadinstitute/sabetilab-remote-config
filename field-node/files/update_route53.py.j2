@@ -77,7 +77,7 @@ def update_dns(subdomain, domain, new_ip, new_port):
 
             if old_ip == new_ip and old_port == new_port:
                     if sys.stdin.isatty():
-                        print('%s is current. (%s)' % (fqdn, new_ip))
+                        print('%s is current. (%s:%s)' % (fqdn, new_ip, new_port))
                     sys.exit(0)
 
             if old_ip != new_ip:

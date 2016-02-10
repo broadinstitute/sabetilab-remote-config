@@ -1,0 +1,73 @@
+---
+- name: copy the patched init script
+  copy:
+    src=sensu-{{ item }}
+    dest=/etc/init.d/
+    owner=root
+    group=root
+    mode=755
+    backup=yes
+  with_items:
+    - server
+    - api
+  when: sensu_server_patch_init_scripts
+
+- name: ensure the patched init script are used
+  command: /usr/sbin/update-rc.d -f sensu-{{ item }} remove && /usr/sbin/update-rc.d sensu-{{ item }} defaults
+  with_items:
+    - server
+    - api
+  when: sensu_server_patch_init_scripts
+
+- name: copy the handlers files
+  copy:
+    src: "{{sensu_scripts_dir}}/handlers/"
+    dest: "/etc/sensu/handlers/"
+    owner: "sensu"
+    group: "sensu"
+    mode: "0750"
+
+- name: copy extension files
+  copy:
+    src: "{{sensu_scripts_dir}}/extensions/"
+    dest: "/etc/sensu/extensions/"
+    owner: "sensu"
+    group: "sensu"
+    mode: "0750"
+  notify:
+    - restart sensu server
+
+- name: copy plugins files
+  copy:
+    src: "{{sensu_scripts_dir}}/plugins/"
+    dest: "/etc/sensu/plugins/"
+    owner: "sensu"
+    group: "sensu"
+    mode: "0750"
+  notify:
+    - restart sensu server
+
+- name: generate config files
+  template:
+    src: "{{ item }}.json.j2"
+    dest: "/etc/sensu/conf.d/{{ item }}.json"
+    owner: "sensu"
+    group: "sensu"
+    mode: "0640"
+  with_items:
+    - handlers
+    - redis
+    - api
+    - settings
+    - checks
+  notify:
+    - restart sensu server
+
+- name: Start sensu-{server,api} and make it survive a reboot
+  service:
+    name: "sensu-{{ item }}"
+    enabled: "yes"
+    state: "started"
+  with_items:
+    - server
+    - api

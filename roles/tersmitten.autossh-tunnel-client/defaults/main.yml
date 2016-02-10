@@ -20,3 +20,4 @@ autossh_tunnel_client_ssh_options:
  - 'ServerAliveCountMax 3'
  - 'BatchMode=yes'
  - 'StrictHostKeyChecking=no'
+ - 'UserKnownHostsFile=/dev/null'

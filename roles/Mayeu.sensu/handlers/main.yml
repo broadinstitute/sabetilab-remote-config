@@ -1,0 +1,16 @@
+---
+# handlers file for sensu
+- name: restart sensu server
+  service: name=sensu-{{ item }} state=restarted
+  with_items:
+    - server
+    - api
+  when: sensu_install_server
+
+- name: restart sensu client
+  service: name=sensu-client state=restarted
+  when: sensu_install_client
+
+- name: restart uchiwa service
+  service: name=uchiwa state=restarted
+  when: sensu_install_uchiwa

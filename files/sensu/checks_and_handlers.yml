@@ -1,0 +1,20 @@
+sensu_checks:
+  test_check:
+    handler    : default
+    command    : "/bin/sh -c 'echo Hello World'"
+    interval   : 60
+    subscribers:
+      - "node"
+
+  autossh_client: 
+    handler    : default
+    command    : "/etc/sensu/plugins/check-for-autossh-process.rb"
+    interval   : 60
+    subscribers:
+      - "node"
+
+# Dummy sensu_handlers
+sensu_handlers:
+  default:
+    type   : pipe
+    command: "cat"
