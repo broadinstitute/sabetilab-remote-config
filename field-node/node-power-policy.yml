@@ -1,0 +1,60 @@
+- hosts: nodes
+
+  become: yes
+
+  vars_files:
+    - "../settings_field_node.yml"
+
+  vars:
+    hibernation_policy_file_path: "/etc/polkit-1/localauthority/50-local.d/com.ubuntu.enable-hibernate.pkla"
+    
+    # These are machine types that are known to return correctly from hibernation.
+    # Hibernation depends on hardware and drivers, so only compatible machines
+    # should be included here.
+    machine_types_to_hibernate:
+      - "Precision M4800"
+
+  tasks:
+    - name: get machine swap partition size (kB)
+      shell: /bin/bash -c "[ ! -z $(swapon --show=SIZE --raw --noheadings --bytes) ] && expr $(swapon --show=SIZE --raw --noheadings --bytes) / 1024 || echo '0'"
+      register: swap_size
+
+    - debug: 
+        msg: "Machine swap partition size: {{swap_size.stdout}} kB"
+
+    - name: get machine ram size (kB)
+      shell: "cat /proc/meminfo | grep MemTotal | awk '{print $2}'"
+      register: mem_size
+
+    - debug: 
+        msg: "Machine RAM size: {{mem_size.stdout}} kB"
+
+    - name: get machine model number
+      shell: "dmidecode -s system-product-name"
+      register: model_number
+
+    - debug: 
+        msg: "Machine identified as {{model_number.stdout}}"
+
+    - debug: 
+        msg: "swap partition size not large enough to fully contain RAM. Hibernation not enabled."
+      when: (swap_size.stdout < mem_size.stdout)
+
+    - name: enable hibernation
+      template: 
+        src: "./files/com.ubuntu.enable-hibernate.pkla.j2"
+        dest: "{{hibernation_policy_file_path}}"
+        mode: "0744"
+      when: (model_number.stdout in machine_types_to_hibernate) and (swap_size.stdout > mem_size.stdout)
+
+    - name: Ensure hibernation file is not present on incompatible machines
+      shell: /bin/bash -c "[ -f {{hibernation_policy_file_path}} ] && rm -f {{hibernation_policy_file_path}} || echo 'hibernation policy file not found'"
+      when: (swap_size.stdout < mem_size.stdout)
+
+    - name: configure power options
+      script: "./files/configure_power_settings.sh {{hibernation_policy_file_path}} {{item}}"
+      become: yes
+      with_items:
+        - "root"
+        - "lightdm"
+        - "{{ local_usernames_with_sudo_access + local_usernames_with_access + github_usernames_with_access + github_usernames_with_sudo_access }}"

@@ -73,11 +73,14 @@ This helper script will use Vagrant to initialize an EC2 instances which will th
 
 To enable monitoring:
 
+manually ssh to the machine `ssh manager.example.com` and set your root password if prompted, then:
+
 `ansible-playbook -i dynamic-inventory.py --sudo --ask-sudo-pass management-node/manager-sensu.yml`
 
 ### Set up the field nodes
 
-The field nodes should be running Ubuntu 15.10 or later. Install the operating system and pick a hostname. The hostname will become the subdomain automatically given to the field node, and should match an entry found in the settings file, `settings_manager.sh`, under `connected_nodes`. Where appropriate disable suspend in the power options for each of the field nodes.
+The field nodes should be running Ubuntu 15.10 or later. If hibernation ability is desired, ensure the machine is capable (via `pm-hibernate`), that the Product Name (via `dmidecode -s system-product-name`) is listed in `node-enable-hibernate.yml`, and ensure the swap partition size is larger than the physical RAM capacity. 
+Install the operating system and pick a hostname. The hostname will become the subdomain automatically given to the field node, and should match an entry found in the settings file, `settings_manager.sh`, under `connected_nodes`. 
 
 Using a USB thumbdrive or similar, copy the entire local checkout of this repo to each field node (including the settings files and tunnel keys).
  
@@ -215,6 +218,8 @@ sudo lsof -i -n | egrep '\<sshd\>' | grep -v ":ssh" | grep LISTEN | sed 1~2d | a
 ```
 
 ## Notes
+
+If you have difficulty connecting to the manager via ssh, or if it prompts repeatedly for a password change ensure you do not have `ControlMaster auto` set in `~/.ssh/config`
 
 ### management node
 
