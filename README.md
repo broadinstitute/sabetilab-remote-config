@@ -92,9 +92,33 @@ To enable monitoring:
 
 `ansible-playbook ./field-node/node-sensu.yml -i "[nodes]localhost," --connection=local --sudo --ask-sudo-pass`
 
+From remote:
+
+`ansible-playbook -i dynamic-inventory.py --sudo --ask-sudo-pass ./field-node/node-sensu.yml`
+
 #### Samba shares
 
 As part of the setup process, a samba/CIFS user will be created (ex. "miseq", or whatever you specify when prompted) on the field node. A shared directory for this user will be created on the field node upon first log-in by the user, located at `/srv/samba/home/<samba_username>`.
+
+#### DNAnexus upload
+
+There is a playbook, `field-node/node-dx-uploader.yml`, that makes use of the DNAnexus [role](https://github.com/dnanexus-rnd/dx-streaming-upload) to stream data from a samba share to a project on DNAnexus. Once configured, any MiSeq run directories copied to the samba share of a field node will be automatically uploaded to DNAnexus.
+
+To configure for automated uploads, a project needs to be created on DNAnexus. A user should be created to be used with the uploader.  The project should be read-only for all users but one created specifically to handle uploads. This ensures that the file structure of the project on the cloud side remains inline with what is expected by the DNAnexus upload client.
+
+After a project and upload user have been created, a DNAnexus API token should be created for the upload user. 
+
+The DNAnexus project ID ("`project-aaabbbccc...`") and user API token must be copied to Ansible variables, and an applet ID ("`applet-aaabbbccc...`") may optionally be specified. If it is desired to use the same project and user for all nodes, a file called `nodes` may be created the within `group_vars/`, based on `group_vars/nodes.template` to hold the values to use for all nodes. If a node-specific upload user or project is preferred, the group settings can be overridden by creating a file in `host_vars/` based on `host_vars/node-n.template`.
+
+After the project and user have been created, and the values have been copied to a file in either `host_vars` or `group_vars`, the playbook to set up the uploader can be run on the field nodes. 
+
+**Note:** This playbook must be run AFTER a samba user has been created by `field-node/node-samba.yml`. A samba user should already exist if the field node was configured via `setup_field_node_local.sh` or by running the playbook `field-node/node-full.yml`. The playbook will prompt for the samba username of the user to sync to DNAnexus. In most cases this should be the samba user created earlier in the configuration process.
+
+`ansible-playbook ./field-node/node-dx-uploader.yml -i "[nodes]localhost," --connection=local --sudo --ask-sudo-pass`
+
+From remote:
+
+`ansible-playbook -i dynamic-inventory.py --sudo --ask-sudo-pass field-node/node-dx-uploader.yml`
 
 ## Making changes
 
@@ -156,7 +180,43 @@ The following field node playbooks exist and may be used for more directed confi
 * `field-node/node-tunnel.yml` installs autossh and configures SSH reverse tunnel
 * `field-node/node-restart-autossh.yml` restarts the autossh daemon
 * `field-node/node-sensu.yml` sets up monitoring on the field node
+## Setup in the field
 
+### Network configuration
+Each field node expects to share a subnet with the devices that will be uploading data. Consequently, a field node and its MiSeq instruments will need to be connected to a common router:
+
+                      ╳╳╳╳╳╳╳╳╳╳╳╳╳╳╳╳╳╳╳╳╳╳╳╳╳╳╳╳                       
+                     ╳          Internet          ╳                      
+                      ╳╳╳╳╳╳╳╳╳╳╳╳╳╳╳╳╳╳╳╳╳╳╳╳╳╳╳╳                       
+                                    ▲                                    
+                                    │                                    
+                                    ▼                                    
+                        ┌───────────────────────┐                        
+                        │   Institutional LAN   │                        
+                        │        or ISP         │                        
+                        └───────────────────────┘                        
+                                    ▲                                    
+                                    │                                    
+                                    ▼                                    
+                        ┌───────────────────────┐                        
+    ┌───────────────────┤        Router         ├──────────────────────┐ 
+    │                   └──▲────────▲─────▲─────┘                      │ 
+    │              ┌───────┘        │     └─────────────┐              │ 
+    │              ▼                │                   │              │ 
+    │  ┌───────────────────────┐    └────┐              ▼              │ 
+    │  │      Field node       │         │  ┌───────────────────────┐  │ 
+    │  └───────────────────────┘         │  │         MiSeq         │  │ 
+    │                                    │  └───────────────────────┘  │ 
+    │                                    ▼                             │ 
+    │                                  ┌───────────────────────┐       │ 
+    │                                  │         MiSeq         │       │ 
+    │                                  └───────────────────────┘       │ 
+    └────────────────────────────────────────────────Shared subnet─────┘ 
+
+### Software configuration
+
+#### MiSeq setup
+The location of the run directory used by each MiSeq should be set to be the samba share. Once connected to a common router, the samba share provided by the field node should be visible to the MiSeq via Explorer as a network drive. On the MiSeq, mount the samba share, entering the samba username and credentials specified when the field node was configured.
 
 ## Connecting to nodes
 
