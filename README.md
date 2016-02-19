@@ -164,7 +164,7 @@ To run a playbook on one node:
 
 `ansible-playbook --limit node-3 -i dynamic-inventory.py [--sudo --ask-sudo-pass] some-playbook.yml`
 
-To reboot all nodes:
+To reboot all nodes (note that this command may appear to fail, since a reboot prevents Ansible from receiving confirmation of command execution):
 
 `ansible nodes -i dynamic-inventory.py --sudo --ask-sudo-pass -m shell -a "reboot"`
 
@@ -180,6 +180,8 @@ The following field node playbooks exist and may be used for more directed confi
 * `field-node/node-tunnel.yml` installs autossh and configures SSH reverse tunnel
 * `field-node/node-restart-autossh.yml` restarts the autossh daemon
 * `field-node/node-sensu.yml` sets up monitoring on the field node
+* `field-node/node-dx-uploader.yml` sets up streaming upload to DNAnexus
+* `field-node/node-geoip.yml` prints the geographic location of each node
 ## Setup in the field
 
 ### Network configuration
@@ -288,4 +290,3 @@ As an alternative to the `setup-manager.sh` script, the management node can be d
 `vagrant up`
 
 ### field nodes
-
