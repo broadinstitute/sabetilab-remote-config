@@ -46,5 +46,5 @@
       apt: pkg=ifstat state=installed
 
     - name: Install gems
-      script: ../files/install-sensu-gems.sh
+      script: ../files/sensu/install-sensu-gems.sh
    

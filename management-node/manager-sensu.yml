@@ -80,7 +80,7 @@
       apt: pkg=ifstat state=installed
 
     - name: Install gems
-      script: ../files/install-sensu-gems.sh
+      script: ../files/sensu/install-sensu-gems.sh
 
     - debug: msg="Queueing rabbitmq for restart"
       notify: restart rabbitmq-server
