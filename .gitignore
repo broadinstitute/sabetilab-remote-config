@@ -65,3 +65,5 @@ target/
 *id_rsa*
 
 keys/
+host_vars/*
+!host_vars/*.template

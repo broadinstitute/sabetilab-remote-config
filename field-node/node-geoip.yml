@@ -1,0 +1,9 @@
+- hosts: nodes
+
+  tasks:
+    - shell: "curl -s ipinfo.io/$(dig TXT +short o-o.myaddr.l.google.com @ns1.google.com | awk -F'\"' '{ print $2}') | python -c 'import json,sys;obj=json.load(sys.stdin);print(\", \".join([obj[\"city\"],obj[\"region\"],obj[\"country\"]]))'"
+      args:
+        warn: False
+      register: location_result
+
+    - debug: msg="{{location_result.stdout}}"
