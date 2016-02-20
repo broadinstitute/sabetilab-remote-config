@@ -73,8 +73,13 @@ samba_default_global:
   socket_options: 'TCP_NODELAY SO_RCVBUF=8192 SO_SNDBUF=8192'
   deadtime: '10'
   wins_support: 'no'
-  dns_proxy: 'no'
+  dns_proxy: 'yes'
   name_resolve_order: 'bcast wins lmhosts host'
+  #local master: 'yes'
+  #preferred master: 'yes'
+  #os_level: 65
+  #lm_announce: 'yes'
+  #lm_interval: 20
 
   # Disable printing by default
   printing: 'bsd'
