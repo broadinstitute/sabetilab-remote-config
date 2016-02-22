@@ -283,6 +283,8 @@ sudo lsof -i -n | egrep '\<sshd\>' | grep -v ":ssh" | grep LISTEN | sed 1~2d | a
 
 If you have difficulty connecting to the manager via ssh, or if it prompts repeatedly for a password change ensure you do not have `ControlMaster auto` set in `~/.ssh/config`
 
+Note that the username to be used for ansible connections must be specified in `settings_manager.yml`. Any ansible playbooks run with ``--sudo`` must use this same user, and the sudo password must be the same across all nodes on which the playbook is to be run. In must cases the user should be one present in `github_usernames_with_sudo_access`.
+
 ### management node
 
 As an alternative to the `setup-manager.sh` script, the management node can be deployed by calling vagrant directly:
