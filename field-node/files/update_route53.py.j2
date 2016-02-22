@@ -68,35 +68,34 @@ def update_dns(subdomain, domain, new_ip, new_port):
     zone = route53.get_zone(domain)
     a_record = zone.get_a(fqdn)
 
-    old_port = get_port(fqdn)
-
     datestr = '"P%s; Last update %s."' % (new_port, datetime.utcnow().strftime('%Y-%m-%d %H:%M'))
 
     if a_record:
-            old_ip = a_record.resource_records[0]
+        old_port = get_port(fqdn)
+        old_ip = a_record.resource_records[0]
 
-            if old_ip == new_ip and old_port == new_port:
-                    if sys.stdin.isatty():
-                        print('%s is current. (%s:%s)' % (fqdn, new_ip, new_port))
-                    sys.exit(0)
+        if old_ip == new_ip and old_port == new_port:
+                if sys.stdin.isatty():
+                    print('%s is current. (%s:%s)' % (fqdn, new_ip, new_port))
+                sys.exit(0)
 
-            if old_ip != new_ip:
-                try:
-                    if sys.stdin.isatty():
-                        print('Updating %s: %s -> %s' % (fqdn, old_ip, new_ip))
-                    zone.update_a(fqdn, new_ip, 900)
-                except DNSServerError:
-                    # create the record
-                    zone.add_a(fqdn, new_ip, 900)
+        if old_ip != new_ip:
+            try:
+                if sys.stdin.isatty():
+                    print('Updating %s: %s -> %s' % (fqdn, old_ip, new_ip))
+                zone.update_a(fqdn, new_ip, 900)
+            except DNSServerError:
+                # create the record
+                zone.add_a(fqdn, new_ip, 900)
 
-            if old_port != new_port:
-                try:
-                    if sys.stdin.isatty():
-                        print('Updating port for %s: %s -> %s' % (fqdn, old_port, new_port))
-                    zone.update_txt(fqdn, datestr, 900)
-                except DNSServerError:
-                    # create the record
-                    zone.add_txt(fqdn, datestr, 900)
+        if old_port != new_port:
+            try:
+                if sys.stdin.isatty():
+                    print('Updating port for %s: %s -> %s' % (fqdn, old_port, new_port))
+                zone.update_txt(fqdn, datestr, 900)
+            except DNSServerError:
+                # create the record
+                zone.add_txt(fqdn, datestr, 900)
 
     else:
             zone.add_a(fqdn, new_ip, 900)
