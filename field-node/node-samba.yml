@@ -27,7 +27,7 @@
         shell: /usr/sbin/nologin
 
     - name: set samba user password
-      shell: "(echo {{ samba_username }}; echo {{ samba_username }}) | smbpasswd -s -a {{ samba_user_password }}"
+      shell: "(echo {{ samba_user_password }}; echo {{ samba_user_password }}) | smbpasswd -s -a {{ samba_username }}"
 
     - name: restart samba services
       service: 
