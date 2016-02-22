@@ -63,6 +63,7 @@
       register: tunnel_port
 
     - debug: msg="Observed change in tunnel port for {{ inventory_hostname }} {{ ansible_port }} -> {{ tunnel_port.stdout }}"
+      when: ansible_port is defined # only defined when running this playbook over ssh
 
     - name: waiting for server to come back
       delegate_to: "{{ manager_domain_name }}"
@@ -71,4 +72,4 @@
 
     - name: set new port for remainder of ansible playbook
       set_fact: ansible_port={{ tunnel_port.stdout }}
-      when: ansible_port != tunnel_port.stdout
+      when: ansible_port is defined and ansible_port != tunnel_port.stdout
