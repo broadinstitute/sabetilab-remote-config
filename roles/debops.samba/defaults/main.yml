@@ -70,16 +70,27 @@ samba_default_global:
   hide_files: '/.*/lost+found/'
 
   # Networking / Connections
-  socket_options: 'TCP_NODELAY SO_RCVBUF=8192 SO_SNDBUF=8192'
+  socket_options: "IPTOS_LOWDELAY SO_RCVBUF=131072 SO_SNDBUF=131072 TCP_NODELAY"
   deadtime: '10'
-  wins_support: 'no'
+  wins_support: 'yes'
   dns_proxy: 'yes'
   name_resolve_order: 'bcast wins lmhosts host'
-  #local master: 'yes'
+  local master: 'yes'
   #preferred master: 'yes'
-  #os_level: 65
-  #lm_announce: 'yes'
-  #lm_interval: 20
+  os_level: 65
+  lm_announce: 'yes'
+  lm_interval: '60'
+  min_receivefile_size: "2048"
+  aio_read_size: "2048"
+  aio_write_size: "2048"
+  write_cache_size: "1024000"
+  read_raw: "yes"
+  write_raw: "yes"
+  getwd_cache: "yes"
+  oplocks: "yes"
+  max_xmit: "32768"
+  dead_time: "15"
+  large_readwrite: "yes"
 
   # Disable printing by default
   printing: 'bsd'
