@@ -82,7 +82,7 @@ manually ssh to the machine `ssh manager.example.com` and set your root password
 The field nodes should be running Ubuntu 15.10 or later. If hibernation ability is desired, ensure the machine is capable (via `pm-hibernate`), that the Product Name (via `dmidecode -s system-product-name`) is listed in `node-enable-hibernate.yml`, and ensure the swap partition size is larger than the physical RAM capacity. 
 Install the operating system and pick a hostname. The hostname will become the subdomain automatically given to the field node, and should match an entry found in the settings file, `settings_manager.sh`, under `connected_nodes`. 
 
-Using a USB thumbdrive or similar, copy the entire local checkout of this repo to each field node (including the settings files and tunnel keys).
+Using a USB thumbdrive or similar, copy the entire local checkout of this repository to each field node (including the settings files and tunnel keys). 
  
 On each field node, run:
 
