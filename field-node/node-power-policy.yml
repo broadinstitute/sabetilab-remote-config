@@ -51,10 +51,16 @@
       shell: /bin/bash -c "[ -f {{hibernation_policy_file_path}} ] && rm -f {{hibernation_policy_file_path}} || echo 'hibernation policy file not found'"
       when: (swap_size.stdout < mem_size.stdout)
 
+    - name: get list of users
+      shell: "cut -d: -f1 /etc/passwd"
+      register: user_list_cmd
+
     - name: configure power options
       script: "./files/configure_power_settings.sh {{hibernation_policy_file_path}} {{item}}"
       become: yes
       with_items:
-        - "root"
-        - "lightdm"
-        - "{{ local_usernames_with_sudo_access + local_usernames_with_access + github_usernames_with_access + github_usernames_with_sudo_access }}"
+        - "{{ user_list_cmd.stdout_lines }}"
+        #- "root"
+        #- "lightdm"
+        #- "{{ ansible_user }}"
+        #- "{{ local_usernames_with_sudo_access + local_usernames_with_access + github_usernames_with_access + github_usernames_with_sudo_access }}"

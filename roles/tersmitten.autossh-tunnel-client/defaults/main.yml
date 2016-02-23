@@ -19,5 +19,6 @@ autossh_tunnel_client_ssh_options:
  - 'ServerAliveInterval 60'
  - 'ServerAliveCountMax 3'
  - 'BatchMode=yes'
+ - 'ExitOnForwardFailure=yes'
  - 'StrictHostKeyChecking=no'
  - 'UserKnownHostsFile=/dev/null'

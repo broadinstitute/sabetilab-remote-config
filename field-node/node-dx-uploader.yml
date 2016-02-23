@@ -1,11 +1,22 @@
 - hosts: nodes
+
+  vars_prompt:
+    - name: "samba_username"
+      prompt: "Enter username of samba user to sync with DNAnexus"
+      private: no
+
   vars_files:
     - "../settings_field_node.yml"
   vars:
-    sync_directory: '/srv/samba/home/miseq'
+    monitored_users:
+      - username: "{{ samba_username }}"
+        applet: "{{ applet }}" # sourced from group_vars/ or host_vars/
+        monitored_directories:
+          - "/srv/samba/home/{{ samba_username }}"
+    mode: deploy
 
   roles: 
-    - dnanexus.uploader
+    - dx-streaming-upload
 
   tasks:
     - debug: msg="Configuring DNAnexus uploader..."

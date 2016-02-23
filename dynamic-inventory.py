@@ -14,7 +14,7 @@ with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "settings_ma
 class AnsibleInventory(object):
     domain  = settings_object["domain_name"] #"sabeti-aws.net"
     manager_domain = "manager." + domain
-    username = settings_object["username"]
+    username = settings_object["ssh_username"]
 
     inventory = {
         "nodes"   : {

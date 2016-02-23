@@ -82,7 +82,7 @@ manually ssh to the machine `ssh manager.example.com` and set your root password
 The field nodes should be running Ubuntu 15.10 or later. If hibernation ability is desired, ensure the machine is capable (via `pm-hibernate`), that the Product Name (via `dmidecode -s system-product-name`) is listed in `node-enable-hibernate.yml`, and ensure the swap partition size is larger than the physical RAM capacity. 
 Install the operating system and pick a hostname. The hostname will become the subdomain automatically given to the field node, and should match an entry found in the settings file, `settings_manager.sh`, under `connected_nodes`. 
 
-Using a USB thumbdrive or similar, copy the entire local checkout of this repo to each field node (including the settings files and tunnel keys).
+Using a USB thumbdrive or similar, copy the entire local checkout of this repository to each field node (including the settings files and tunnel keys). 
  
 On each field node, run:
 
@@ -92,9 +92,33 @@ To enable monitoring:
 
 `ansible-playbook ./field-node/node-sensu.yml -i "[nodes]localhost," --connection=local --sudo --ask-sudo-pass`
 
+From remote:
+
+`ansible-playbook -i dynamic-inventory.py --sudo --ask-sudo-pass ./field-node/node-sensu.yml`
+
 #### Samba shares
 
 As part of the setup process, a samba/CIFS user will be created (ex. "miseq", or whatever you specify when prompted) on the field node. A shared directory for this user will be created on the field node upon first log-in by the user, located at `/srv/samba/home/<samba_username>`.
+
+#### DNAnexus upload
+
+There is a playbook, `field-node/node-dx-uploader.yml`, that makes use of the DNAnexus [role](https://github.com/dnanexus-rnd/dx-streaming-upload) to stream data from a samba share to a project on DNAnexus. Once configured, any MiSeq run directories copied to the samba share of a field node will be automatically uploaded to DNAnexus.
+
+To configure for automated uploads, a project needs to be created on DNAnexus. A user should be created to be used with the uploader.  The project should be read-only for all users but one created specifically to handle uploads. This ensures that the file structure of the project on the cloud side remains inline with what is expected by the DNAnexus upload client.
+
+After a project and upload user have been created, a DNAnexus API token should be created for the upload user. 
+
+The DNAnexus project ID ("`project-aaabbbccc...`") and user API token must be copied to Ansible variables, and an applet ID ("`applet-aaabbbccc...`") may optionally be specified. If it is desired to use the same project and user for all nodes, a file called `nodes` may be created the within `group_vars/`, based on `group_vars/nodes.template` to hold the values to use for all nodes. If a node-specific upload user or project is preferred, the group settings can be overridden by creating a file in `host_vars/` based on `host_vars/node-n.template`.
+
+After the project and user have been created, and the values have been copied to a file in either `host_vars` or `group_vars`, the playbook to set up the uploader can be run on the field nodes. 
+
+**Note:** This playbook must be run AFTER a samba user has been created by `field-node/node-samba.yml`. A samba user should already exist if the field node was configured via `setup_field_node_local.sh` or by running the playbook `field-node/node-full.yml`. The playbook will prompt for the samba username of the user to sync to DNAnexus. In most cases this should be the samba user created earlier in the configuration process.
+
+`ansible-playbook ./field-node/node-dx-uploader.yml -i "[nodes]localhost," --connection=local --sudo --ask-sudo-pass`
+
+From remote:
+
+`ansible-playbook -i dynamic-inventory.py --sudo --ask-sudo-pass field-node/node-dx-uploader.yml`
 
 ## Making changes
 
@@ -140,7 +164,7 @@ To run a playbook on one node:
 
 `ansible-playbook --limit node-3 -i dynamic-inventory.py [--sudo --ask-sudo-pass] some-playbook.yml`
 
-To reboot all nodes:
+To reboot all nodes (note that this command may appear to fail, since a reboot prevents Ansible from receiving confirmation of command execution):
 
 `ansible nodes -i dynamic-inventory.py --sudo --ask-sudo-pass -m shell -a "reboot"`
 
@@ -156,7 +180,45 @@ The following field node playbooks exist and may be used for more directed confi
 * `field-node/node-tunnel.yml` installs autossh and configures SSH reverse tunnel
 * `field-node/node-restart-autossh.yml` restarts the autossh daemon
 * `field-node/node-sensu.yml` sets up monitoring on the field node
+* `field-node/node-dx-uploader.yml` sets up streaming upload to DNAnexus
+* `field-node/node-geoip.yml` prints the geographic location of each node
+## Setup in the field
 
+### Network configuration
+Each field node expects to share a subnet with the devices that will be uploading data. Consequently, a field node and its MiSeq instruments will need to be connected to a common router:
+
+                      ╳╳╳╳╳╳╳╳╳╳╳╳╳╳╳╳╳╳╳╳╳╳╳╳╳╳╳╳                       
+                     ╳          Internet          ╳                      
+                      ╳╳╳╳╳╳╳╳╳╳╳╳╳╳╳╳╳╳╳╳╳╳╳╳╳╳╳╳                       
+                                    ▲                                    
+                                    │                                    
+                                    ▼                                    
+                        ┌───────────────────────┐                        
+                        │   Institutional LAN   │                        
+                        │        or ISP         │                        
+                        └───────────────────────┘                        
+                                    ▲                                    
+                                    │                                    
+                                    ▼                                    
+                        ┌───────────────────────┐                        
+    ┌───────────────────┤        Router         ├──────────────────────┐ 
+    │                   └──▲────────▲─────▲─────┘                      │ 
+    │              ┌───────┘        │     └─────────────┐              │ 
+    │              ▼                │                   │              │ 
+    │  ┌───────────────────────┐    └────┐              ▼              │ 
+    │  │      Field node       │         │  ┌───────────────────────┐  │ 
+    │  └───────────────────────┘         │  │         MiSeq         │  │ 
+    │                                    │  └───────────────────────┘  │ 
+    │                                    ▼                             │ 
+    │                                  ┌───────────────────────┐       │ 
+    │                                  │         MiSeq         │       │ 
+    │                                  └───────────────────────┘       │ 
+    └────────────────────────────────────────────────Shared subnet─────┘ 
+
+### Software configuration
+
+#### MiSeq setup
+The location of the run directory used by each MiSeq should be set to be the samba share. Once connected to a common router, the samba share provided by the field node should be visible to the MiSeq via Explorer as a network drive. On the MiSeq, mount the samba share, entering the samba username and credentials specified when the field node was configured.
 
 ## Connecting to nodes
 
@@ -221,6 +283,12 @@ sudo lsof -i -n | egrep '\<sshd\>' | grep -v ":ssh" | grep LISTEN | sed 1~2d | a
 
 If you have difficulty connecting to the manager via ssh, or if it prompts repeatedly for a password change ensure you do not have `ControlMaster auto` set in `~/.ssh/config`
 
+Note that the username to be used for ansible connections must be specified in `settings_manager.yml`. Any ansible playbooks run with ``--sudo`` must use this same user, and the sudo password must be the same across all nodes on which the playbook is to be run. In must cases the user should be one present in `github_usernames_with_sudo_access`.
+
+In the event an exfat USB drive is not mounting, run `fusermount -u /media/broken-mount-point`
+
+If time-rotated moves to external storage is desired, the external drive should be formatted ExFAT, and the drive name (label) should be `SEQDATA`.
+
 ### management node
 
 As an alternative to the `setup-manager.sh` script, the management node can be deployed by calling vagrant directly:
@@ -228,4 +296,3 @@ As an alternative to the `setup-manager.sh` script, the management node can be d
 `vagrant up`
 
 ### field nodes
-

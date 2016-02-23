@@ -1,0 +1,27 @@
+galaxy_info:
+  author: DNAnexus
+  description: 
+  company: DNAnexus
+
+  # Some suggested licenses:
+  # - BSD (default)
+  # - MIT
+  # - GPLv2
+  # - GPLv3
+  # - Apache
+  # - CC-BY
+  license: Apache
+
+  min_ansible_version: 2.0
+
+  platforms:
+  - name: Ubuntu
+    versions:
+     - trusty
+     - wily
+
+  galaxy_tags:
+     - Illumina
+     - DNAnexus
+     - upload
+     - data
