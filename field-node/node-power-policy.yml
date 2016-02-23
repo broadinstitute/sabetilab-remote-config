@@ -59,7 +59,7 @@
       script: "./files/configure_power_settings.sh {{hibernation_policy_file_path}} {{item}}"
       become: yes
       with_items:
-        - "{{ user_list_cmd.stdout }}"
+        - "{{ user_list_cmd.stdout_lines }}"
         #- "root"
         #- "lightdm"
         #- "{{ ansible_user }}"
