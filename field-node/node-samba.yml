@@ -7,6 +7,9 @@
     samba_default_globals:
       browseable: 'no'
 
+    seqdata_archival_path: "/media/seqdata"
+    move_data_older_than_days: "7"
+
   vars_prompt:
     - name: "samba_username"
       prompt: "Enter samba username"
@@ -34,3 +37,18 @@
         name: "{{ item }}" 
         state: "restarted"
       with_items: "{{ samba_service_names }}"
+
+    - name: Copy in data moving script (for old data)
+      template: 
+        src: "./files/move_old_subdirs.sh" 
+        dest: "/opt/field-node/move_old_subdirs.sh"
+        mode: "0744"
+
+    - debug:
+        msg: "User samba home created: {{ samba_homes_path }}/{{samba_username}}"
+
+    - cron: 
+        name: "move old data" 
+        special_time: "hourly" 
+        state: "present"
+        job: "/opt/field-node/move_old_subdirs.sh {{ samba_homes_path }}/{{samba_username}} {{ seqdata_archival_path }} {{ move_data_older_than_days }}"

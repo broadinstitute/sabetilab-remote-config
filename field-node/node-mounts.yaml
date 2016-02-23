@@ -8,7 +8,7 @@
        name: "/media/seqdata"
        src: "LABEL=SEQDATA"
        fstype: "exfat"
-       state: present
+       state: "present"
        passno: '0'
        dump: '0'
        opts: "nofail,auto,noatime,rw,user"
