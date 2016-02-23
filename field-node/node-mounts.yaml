@@ -1,0 +1,14 @@
+- hosts: nodes
+
+  tasks:
+    - name: Install exfat-fuse
+      apt: pkg=exfat-fuse state=installed
+
+    - mount: 
+       name: "/media/seqdata"
+       src: "LABEL=SEQDATA"
+       fstype: "exfat"
+       state: present
+       passno: '0'
+       dump: '0'
+       opts: "nofail,auto,noatime,rw,user"

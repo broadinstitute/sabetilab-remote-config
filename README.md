@@ -287,6 +287,8 @@ Note that the username to be used for ansible connections must be specified in `
 
 In the event an exfat USB drive is not mounting, run `fusermount -u /media/broken-mount-point`
 
+If time-rotated moves to external storage is desired, the external drive should be formatted ExFAT, and the drive name (label) should be `SEQDATA`.
+
 ### management node
 
 As an alternative to the `setup-manager.sh` script, the management node can be deployed by calling vagrant directly:
