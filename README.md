@@ -289,6 +289,12 @@ In the event an exfat USB drive is not mounting, run `fusermount -u /media/broke
 
 If time-rotated moves to external storage is desired, the external drive should be formatted ExFAT, and the drive name (label) should be `SEQDATA`.
 
+To reach the router used by the field machines (ex. 192.168.2.1), add a local port forward `-L 8080:192.168.2.1:443` and access `localhost:8080` on the initiating machine via a web browser:
+
+    ssh -L 8080:192.168.2.1:443 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR -o ProxyCommand= [...]
+
+The local port forward can be added to the command printed by `./connect.sh` 
+
 ### management node
 
 As an alternative to the `setup-manager.sh` script, the management node can be deployed by calling vagrant directly:
