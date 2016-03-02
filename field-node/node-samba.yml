@@ -10,7 +10,7 @@
     dfree_script: "/opt/field-node/faked_dfree.sh"
 
     seqdata_archival_path: "/media/seqdata"
-    move_data_older_than_days: "7"
+    move_data_older_than_days: "5"
 
   vars_prompt:
     - name: "samba_username"
