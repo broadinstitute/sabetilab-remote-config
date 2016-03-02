@@ -46,6 +46,12 @@
         dest: "/opt/field-node/move_old_subdirs.sh"
         mode: "0755"
 
+    - name: Copy in samba share readme
+      template: 
+        src: "./files/PUT_MISEQ_OUTPUT_HERE.txt" 
+        dest: "{{ samba_homes_path }}/{{samba_username}}/PUT_MISEQ_OUTPUT_HERE.txt"
+        mode: "0755"
+
     - name: Copy in data moving script (for old data)
       template: 
         src: "./files/faked_dfree.sh" 
