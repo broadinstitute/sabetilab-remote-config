@@ -36,7 +36,6 @@ samba_shares: '{{ samba_default_shares }}'
 
 # Default [global] configuration
 samba_default_global:
-
   # Browsing / Identification
   workgroup: '{{ samba_workgroup | default("WORKGROUP") }}'
   netbios_name: '{{ samba_netbios_name | default(ansible_hostname) }}'
@@ -98,6 +97,8 @@ samba_default_global:
   printcap_name: '/dev/null'
   show_add_printer_wizard: 'no'
   disable_spoolss: 'yes'
+
+  dfree_command: '{{ dfree_script | default("/usr/local/bin/dfree.sh") }}'
 
 
 # Default [homes] section

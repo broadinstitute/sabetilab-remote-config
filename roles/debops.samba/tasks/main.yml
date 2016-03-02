@@ -13,6 +13,11 @@
             dest=/usr/local/sbin/samba-homedir.sh
             owner=root group=root mode=0755
 
+- name: Copy dfree script
+  template: src=usr/local/bin/dfree.sh
+            dest=/usr/local/bin/dfree.sh
+            owner=root group=root mode=0755
+
 - name: Configure Samba server
   template: src=etc/samba/smb.conf.j2
             dest=/etc/samba/smb.conf
