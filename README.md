@@ -108,9 +108,9 @@ To configure for automated uploads, a project needs to be created on DNAnexus. A
 
 After a project and upload user have been created, a DNAnexus API token should be created for the upload user. 
 
-The DNAnexus project ID ("`project-aaabbbccc...`") and user API token must be copied to Ansible variables, and an applet ID ("`applet-aaabbbccc...`") may optionally be specified. If it is desired to use the same project and user for all nodes, a file called `nodes` may be created the within `group_vars/`, based on `group_vars/nodes.template` to hold the values to use for all nodes. If a node-specific upload user or project is preferred, the group settings can be overridden by creating a file in `host_vars/` based on `host_vars/node-n.template`.
+The DNAnexus project ID ("`project-aaabbbccc...`") and user API token must be copied to Ansible variables, and an applet ID ("`applet-aaabbbccc...`") may optionally be specified. If it is desired to use the same project and user for all nodes, modify the `extra_group_vars` section within `settings_manager.yml` to hold the values to use for all nodes. If a node-specific upload user or project is preferred, the group settings can be overridden by modifying the `extra_host_vars` section within `settings_manager.yml`.
 
-After the project and user have been created, and the values have been copied to a file in either `host_vars` or `group_vars`, the playbook to set up the uploader can be run on the field nodes. 
+After the project and user have been created, and the values have been set in `settings_manager.yml`, the playbook to set up the uploader can be run on the field nodes. 
 
 **Note:** This playbook must be run AFTER a samba user has been created by `field-node/node-samba.yml`. A samba user should already exist if the field node was configured via `setup_field_node_local.sh` or by running the playbook `field-node/node-full.yml`. The playbook will prompt for the samba username of the user to sync to DNAnexus. In most cases this should be the samba user created earlier in the configuration process.
 
