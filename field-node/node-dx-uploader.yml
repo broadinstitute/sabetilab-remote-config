@@ -8,15 +8,26 @@
   vars_files:
     - "../settings_field_node.yml"
   vars:
+    post_upload_script: "/opt/field-node/move_old_subdirs_post_upload.sh"
+
     monitored_users:
       - username: "{{ samba_username }}"
         applet: "{{ applet }}" # sourced from group_vars/ or host_vars/
         monitored_directories:
           - "/srv/samba/home/{{ samba_username }}"
+        script: "{{ post_upload_script }}" # script called after upload is complete, where call is: "<script specified>  <path/to/Run/directory>"
     mode: deploy
+
+    seqdata_archival_path: "/media/seqdata"
 
   roles: 
     - dx-streaming-upload
 
   tasks:
-    - debug: msg="Configuring DNAnexus uploader..."
+    - name: Copy in data moving script (for post-upload archival)
+      template: 
+        src: "./files/move_old_subdirs_post_upload.sh.j2" 
+        dest: "{{ post_upload_script }}"
+        mode: "0744"
+
+    - debug: msg="Configured DNAnexus uploader"

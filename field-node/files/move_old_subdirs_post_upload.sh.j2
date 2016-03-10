@@ -1,0 +1,32 @@
+#!/bin/bash
+
+# Args are as follows:
+# $1 source directory (directory to move, post-upload)
+
+if [ "$#" -ne 1 ] || ! [ -d "$1" ]; then
+  echo "Usage: $0 dir_to_move/" >&2
+  echo ""
+  echo "Where:" 
+  echo "        dir_to_move is the directory to move to the DEST_DIR specified below"
+  exit 1
+fi
+
+SOURCE_DIR="$1"
+DEST_DIR="{{ seqdata_archival_path }}"
+
+if [ -d "$DEST_DIR" ]; then
+  if $(mount | grep "$DEST_DIR" &> /dev/null); then
+    # rsync key:
+    # -r = recursive
+    # -l = copy links
+    # -t = maintain times
+    # -D = copy special files
+    # -c = copy based on checksum not times
+    # --remove-source-files = cause rsync to behave more like mv (but with verification)
+    # since empty source directories are NOT removed by rsync, we need to find and remove them
+    rsync -rltDc --remove-source-files $(dirname $SOURCE_DIR)/$(basename $SOURCE_DIR) $(dirname $DEST_DIR)/$(basename $DEST_DIR) && find $SOURCE_DIR -depth -type d -empty -exec rm -rf {} \;
+    # simple fallback:
+    # mv $SOURCE_DIR $DEST_DIR
+  fi
+fi
+

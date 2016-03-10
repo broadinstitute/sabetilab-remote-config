@@ -58,11 +58,13 @@
         dest: "/opt/field-node/faked_dfree.sh"
         mode: "0755"
 
-    - debug:
-        msg: "User samba home created: {{ samba_homes_path }}/{{samba_username}}"
-
+    # this script will be called hourly, but its action should be performed as a post-upload hook
+    # with the cron job as a fallback
     - cron: 
         name: "move old data" 
         special_time: "hourly" 
         state: "present"
         job: "/opt/field-node/move_old_subdirs.sh {{ samba_homes_path }}/{{samba_username}} {{ seqdata_archival_path }} {{ move_data_older_than_days }}"
+
+    - debug:
+        msg: "User samba home created: {{ samba_homes_path }}/{{samba_username}}"
