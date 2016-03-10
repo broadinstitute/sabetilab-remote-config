@@ -21,3 +21,20 @@ connected_nodes:
   - node-1
   - node-2
   - node-3
+
+# note that these override any group vars specified below
+extra_host_vars:
+  node-1:
+    dx_token: "TOKEN_VALUE" # token for a DNAnexus upload user
+    upload_project: "project-aaaaabbbb123" # the ID of a DNAnexus project
+    applet: "applet-aabbcc" # the id of a DNAnexus applet to run after uploading has finished. The applet must be present in the DNAnexus project
+  node-2:
+    dx_token: "TOKEN_VALUE" # token for a DNAnexus upload user
+    upload_project: "project-aaaaabbbb123" # the ID of a DNAnexus project
+    applet: "applet-aabbcc" # the id of a DNAnexus applet to run after uploading has finished. The applet must be present in the DNAnexus project
+
+extra_group_vars:
+  nodes:
+    dx_token: "TOKEN_VALUE" # token for a DNAnexus upload user
+    upload_project: "project-aabbcc" # the ID of a DNAnexus project
+    applet: "applet-aabbcc" # the id of a DNAnexus applet to run after uploading has finished. The applet must be present in the DNAnexus project
