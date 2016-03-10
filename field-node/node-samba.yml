@@ -4,11 +4,13 @@
   vars:
     samba_shares: []
     samba_service_names: ['smbd','nmbd']
-    samba_default_globals:
-      browseable: 'no'
+
+    # used to fake available storage on the samba share
+    # since the MiSeq wants 100GB even though it needs much less (~5GB/run)
+    dfree_script: "/opt/field-node/faked_dfree.sh"
 
     seqdata_archival_path: "/media/seqdata"
-    move_data_older_than_days: "7"
+    move_data_older_than_days: "5"
 
   vars_prompt:
     - name: "samba_username"
@@ -42,7 +44,19 @@
       template: 
         src: "./files/move_old_subdirs.sh" 
         dest: "/opt/field-node/move_old_subdirs.sh"
-        mode: "0744"
+        mode: "0755"
+
+    - name: Copy in samba share readme
+      template: 
+        src: "./files/PUT_MISEQ_OUTPUT_HERE.txt" 
+        dest: "{{ samba_homes_path }}/{{samba_username}}/PUT_MISEQ_OUTPUT_HERE.txt"
+        mode: "0755"
+
+    - name: Copy in data moving script (for old data)
+      template: 
+        src: "./files/faked_dfree.sh" 
+        dest: "/opt/field-node/faked_dfree.sh"
+        mode: "0755"
 
     - debug:
         msg: "User samba home created: {{ samba_homes_path }}/{{samba_username}}"
