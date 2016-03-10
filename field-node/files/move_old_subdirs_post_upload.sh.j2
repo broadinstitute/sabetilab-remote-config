@@ -15,6 +15,7 @@ SOURCE_DIR="$1"
 DEST_DIR="{{ seqdata_archival_path }}"
 
 if [ -d "$DEST_DIR" ]; then
+  if $(mount | grep "$DEST_DIR" &> /dev/null); then
     # rsync key:
     # -r = recursive
     # -l = copy links
@@ -26,5 +27,6 @@ if [ -d "$DEST_DIR" ]; then
     rsync -rltDc --remove-source-files $(dirname $SOURCE_DIR)/$(basename $SOURCE_DIR) $(dirname $DEST_DIR)/$(basename $DEST_DIR) && find $SOURCE_DIR -depth -type d -empty -exec rm -rf {} \;
     # simple fallback:
     # mv $SOURCE_DIR $DEST_DIR
+  fi
 fi
 
