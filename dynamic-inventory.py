@@ -8,33 +8,34 @@ from collections import defaultdict
 
 import yaml
 
-with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "settings_manager.yml"), "r") as settings_file:
-   settings_object = yaml.load(settings_file)
-
 class AnsibleInventory(object):
-    domain  = settings_object["domain_name"] #"sabeti-aws.net"
-    manager_domain = "manager." + domain
-    username = settings_object["ssh_username"]
-
-    inventory = {
-        "nodes"   : {
-            "hosts"   : settings_object["connected_nodes"],
-            "vars"    : {
-                "ansible_ssh_common_args": '-o ProxyCommand="ssh -W %h:%p {user}@{manager}"'.format(user=username, manager=manager_domain),
-                "ansible_host"           : "localhost",
-                "ansible_user"           : "{user}".format(user=username),
-                "ssh_port"               : "6112"
-            }
-        },
-        "managers"    : [ manager_domain ],
-        "_meta" : {
-              "hostvars" : {}
-           }
-    }
-
-
     def __init__(self):
+        with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "settings_manager.yml"), "r") as settings_file:
+           self.settings_object = yaml.load(settings_file)
+
+        self.domain  = self.settings_object["domain_name"]
+        self.manager_domain = "manager." + self.domain
+        self.username = self.settings_object["ssh_username"]
+
+        # base inventory
+        self.inventory = {
+            "nodes"   : {
+                "hosts"   : self.settings_object["connected_nodes"],
+                "vars"    : {
+                    "ansible_ssh_common_args": '-o ProxyCommand="ssh -W %h:%p {user}@{manager}"'.format(user=self.username, manager=self.manager_domain),
+                    "ansible_host"           : "localhost",
+                    "ansible_user"           : "{user}".format(user=self.username),
+                    "ssh_port"               : "6112"
+                }
+            },
+            "managers"    : [ self.manager_domain ],
+            "_meta" : {
+                  "hostvars" : {}
+               }
+        }
+
         self._populate_host_ports()
+        self._populate_vars_from_settings()
 
     @staticmethod
     def _get_txt_record_from_dns(fqdn):
@@ -58,6 +59,21 @@ class AnsibleInventory(object):
 
             self.inventory["_meta"]["hostvars"].setdefault(node_hostname, dict())
             self.inventory["_meta"]["hostvars"][node_hostname]["ansible_port"] = port_for_node
+
+    def _populate_vars_from_settings(self):
+        # populate host vars
+        if "extra_host_vars" in self.settings_object:
+            for hostname in self.settings_object["extra_host_vars"].keys():
+                if hostname in self.inventory["nodes"]["hosts"]:
+                    self.inventory["_meta"]["hostvars"].setdefault(hostname, dict())    
+                    self.inventory["_meta"]["hostvars"][hostname].update(self.settings_object["extra_host_vars"][hostname].copy())
+
+        # populate group vars
+        if "extra_group_vars" in self.settings_object:
+            for groupname in self.settings_object["extra_group_vars"].keys():
+                if groupname in self.inventory:
+                    self.inventory[groupname].setdefault("vars", dict())
+                    self.inventory[groupname]["vars"].update(self.settings_object["extra_group_vars"][groupname].copy())
 
     @staticmethod
     def dump_json(obj_to_dump):
