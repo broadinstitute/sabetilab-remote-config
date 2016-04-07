@@ -26,9 +26,9 @@
       apt: pkg=git state=installed
 
     # If using the dual-NIC expresscard34 card with Realtek 8168
-    - name: Install dual-nic driver
-      script: ./files/install_r8168_drivers.sh
-      become: yes
+    # - name: Install dual-nic driver
+    #   script: ./files/install_r8168_drivers.sh
+    #   become: yes
 
     # - name: Copy in service to renew DHCP lease when expresscard NIC is inserted
     #   template: 
