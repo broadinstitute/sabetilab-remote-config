@@ -60,6 +60,8 @@ target/
 
 *settings*.yml
 
+*.retry
+
 *.pem
 
 *id_rsa*

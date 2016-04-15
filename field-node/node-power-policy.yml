@@ -13,6 +13,7 @@
     # should be included here.
     machine_types_to_hibernate:
       - "Precision M4800"
+      - "Precision 7510" # REQUIRES BIOS >1.4.8 
 
   tasks:
     - name: get machine swap partition size (kB)
