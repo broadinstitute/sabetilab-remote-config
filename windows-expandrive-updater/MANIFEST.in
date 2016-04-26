@@ -1,0 +1,2 @@
+include boto/cacerts/cacerts.txt
+include boto/endpoints.json

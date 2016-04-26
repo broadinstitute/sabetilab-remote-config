@@ -58,6 +58,19 @@
         dest: "{{ samba_homes_path }}/{{samba_username}}/PUT_MISEQ_OUTPUT_HERE.txt"
         mode: "0755"
 
+    - name: get list of users
+      shell: "cut -d: -f1 /etc/passwd"
+      register: user_list_cmd
+
+    - name: add all existing users on system to same group as samba user
+      user: 
+        name: "{{ item }}"
+        groups: "{{ samba_username }}"
+        append: "yes"
+      become: yes
+      with_items:
+        - "{{ user_list_cmd.stdout_lines }}"
+
     - name: Copy in data moving script (for old data)
       template: 
         src: "./files/faked_dfree.sh" 
