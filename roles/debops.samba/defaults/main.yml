@@ -109,6 +109,7 @@ samba_default_homes:
   read_only: 'no'
   writable: 'yes'
   create_mask: '0770'
+  force_create_mode: '0775'
   directory_mask: '0770'
   valid_users: '%S'
   guest_ok: 'no'

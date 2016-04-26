@@ -1,10 +1,11 @@
 #!/usr/bin/python
 
-import os,sys,re,shutil
+import os,imp,sys,re,shutil
 import subprocess
 import json
 import random
 from os.path import exists
+import platform
 
 from datetime import datetime
 
@@ -20,8 +21,6 @@ aws_secret_access_key = ""
 hosted_zone_domain_name = "example.net"
 # must have trailing period
 hosted_zone_domain_name = hosted_zone_domain_name + "." if hosted_zone_domain_name[-1] != "." else hosted_zone_domain_name
-
-# For Windows 10
 
 # IAM policy should be something like:
 # intended to be packed via py2exe (python setup.py py2exe)
@@ -50,6 +49,36 @@ hosted_zone_domain_name = hosted_zone_domain_name + "." if hosted_zone_domain_na
     }
 '''
 
+os_specific = {
+    "osx":{
+        "expandrive_settings_file_path": os.path.expanduser("~/Library/Application Support/ExpanDrive/expandrive5.favorites.js"),
+        "process_name": "ExpanDrive", #possibly /Applications/ExpanDrive.app/Contents/MacOS/ExpanDrive
+        "executable_path": "/Applications/ExpanDrive.app/Contents/MacOS/ExpanDrive"
+
+    },
+    "win10":{
+        "expandrive_settings_file_path": os.path.join( os.path.dirname(os.path.expandvars('%APPDATA%')), "Local", "ExpanDrive", "expandrive5.favorites.js" ),
+        "process_name": "ExpanDrive.exe",
+        "executable_path": "C:\Program Files (x86)\ExpanDrive\ExpanDrive.exe"
+    }
+}
+
+def os_specific_vals():
+    system = platform.system()
+    if system == "Darwin":
+        return os_specific["osx"]
+    elif system == "Windows":
+        release = platform.release()
+        if release == "10":
+            return os_specific["win10"]
+        else:
+            raise NotImplementedError("Support for your OS is not yet included")
+
+def is_py2exe():
+   return (hasattr(sys, "frozen") or # new py2exe
+           hasattr(sys, "importers") # old py2exe
+           or imp.is_frozen("__main__")) # tools/freeze
+
 def get_port(txt_record):
     port_num_matches = re.findall('^P(\d+);.*', txt_record)
     port_num = ""
@@ -72,7 +101,8 @@ def get_nodes():
 
     bt = boto
     conn = bt.route53.connection.Route53Connection(aws_access_key_id=aws_access_key_id, aws_secret_access_key=aws_secret_access_key)#, validate_certs="boto\cacerts\cacerts.txt")
-    conn.ca_certificates_file = "boto\cacerts\cacerts.txt"
+    if is_py2exe():
+        conn.ca_certificates_file = "boto\cacerts\cacerts.txt"
     zone = conn.get_zone(hosted_zone_domain_name)
     records = [r for r in conn.get_all_rrsets(zone.id)]
 
@@ -100,42 +130,72 @@ def create_expandrive_server(server_address, username, remote_path, nickname, po
         "server": server_address,
         "username": username,
         "remotePath": remote_path,
-        "encryptedPassword": "AQAAANCMnd8BFdERjHoAwE/Cl+sBAAAAtOz/p0N+vUCRq2sMUq5GXAAAAAACAAAAAAADZgAAwAAAABAAAAC7oxUuuY+ebtRVXco5/39zAAAAAASAAACgAAAAEAAAAHQLmw6OcYkwa5fjB5oSpawIAAAAMqyA052QYlcUAAAA6LmoUgXw3e3GUdhbkZGyg2bTXew=",
         "type": "sftp",
         "protocol": "sftp",
         "name": nickname,
-        "port": port,
+        "port": str(port),
         "reconnectAtLogon": False,
-        "authentication": "pageant",
+        #"authentication": "pageant",
         "private_key_file": None,
         "position": 2,
-        "mountpoint": "Z:",
+        #"mountpoint": "Z:",
         "id": "".join([chr(i) for i in random.sample(range(ord('a'), ord('z')+1),7)])
     }
+
+    if platform.system() == "Windows":
+        record["authentication"] = "pageant"
+        record["mountpoint"] = "Z:"
+    else:
+        record["authentication"] = "publickey"
+        record["mountpoint"] = "/Volumes/"+record["name"]
+
     return record
 
 
 def kill_process(process_name):
     print("Killing", process_name)
-    for proc in psutil.process_iter():
-        if proc.name() == process_name:
-            proc.kill()
+    if platform.system() == "Windows":
+        try:
+            for proc in psutil.process_iter():
+                if hasattr(proc, "name"):
+                    if proc.name() == process_name:
+                        proc.kill()
+        except psutil.NoSuchProcess:
+            raise IOError("%s process NOT found. Are you running the script with sudo?" % process_name)
+            exit(1)
+            pass
+    elif platform.system() == "Darwin":
+        # since psutil does not yield all processes on OSX unless sudoing
+        # but 'ps -A' does work...
+        import signal
+        p = subprocess.Popen(['ps', '-A'], stdout=subprocess.PIPE)
+        out, err = p.communicate()
+
+        for line in out.splitlines():
+            if process_name in str(line):
+                pid = int(line.split(None, 1)[0])
+                os.kill(pid, signal.SIGKILL)
+
+    
 
 def start_process(executable):
     print("Starting", executable)
-    subprocess.Popen([executable], creationflags=subprocess.CREATE_NEW_CONSOLE )
+    if platform.system() == "Windows":
+        subprocess.Popen([executable], creationflags=subprocess.CREATE_NEW_CONSOLE )
+    else:
+        subprocess.Popen([executable])
 
 if __name__ == "__main__":
     #print(get_nodes())
-    expandrive_executable = "C:\Program Files (x86)\ExpanDrive\ExpanDrive.exe"
+    expandrive_executable = os_specific_vals()["executable_path"]
     if exists(expandrive_executable):
         print("Expandrive present")
 
         # kill expandrive
-        kill_process("ExpanDrive.exe")
+        kill_process(os_specific_vals()["process_name"])
 
-        settings_file = os.path.join( os.path.dirname(os.path.expandvars('%APPDATA%')), "Local", "ExpanDrive", "expandrive5.favorites.js" )
-        settings_file_modified = os.path.join( os.path.dirname(os.path.expandvars('%APPDATA%')), "Local", "ExpanDrive", "expandrive5.favorites.js.mod" )
+        settings_file = os_specific_vals()["expandrive_settings_file_path"]
+        settings_file_modified = settings_file + ".mod"
 
         #print(settings_file)
         if exists(settings_file):
@@ -164,5 +224,18 @@ if __name__ == "__main__":
                     outf.write(json.dumps(existing_server_list))
 
             shutil.move(settings_file_modified, settings_file)
+
+            if platform.system() == "Darwin":
+                import pwd
+                import grp
+
+                uid = pwd.getpwnam("nobody").pw_uid
+                gid = grp.getgrnam("nogroup").gr_gid
+
+                # if we are root, we can change the ownership
+                if os.getuid() == 0:
+                    os.chown(settings_file, uid, gid)
+        else:
+            raise IOError("ExpanDrive settings file not found")
 
         start_process(expandrive_executable)

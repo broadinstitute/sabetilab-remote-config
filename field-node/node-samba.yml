@@ -50,7 +50,7 @@
       file: 
         path: "{{ samba_homes_path }}/{{samba_username}}" 
         state: directory
-        mode: 0755
+        mode: 0775
 
     - name: Copy in samba share readme
       template: 
