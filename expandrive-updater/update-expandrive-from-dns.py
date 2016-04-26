@@ -18,6 +18,7 @@ from dateutil.parser import parse as parsedate #python-dateutil
 
 aws_access_key_id = ""
 aws_secret_access_key = ""
+server_address = "manager.example.net"
 hosted_zone_domain_name = "example.net"
 # must have trailing period
 hosted_zone_domain_name = hosted_zone_domain_name + "." if hosted_zone_domain_name[-1] != "." else hosted_zone_domain_name
@@ -168,8 +169,8 @@ def kill_process(process_name):
                     if proc.name() == process_name:
                         proc.kill()
         except psutil.NoSuchProcess:
-            raise IOError("%s process NOT found. Are you running the script with sudo?" % process_name)
-            exit(1)
+            #raise IOError("%s process NOT found. Are you running the script with sudo?" % process_name)
+            #exit(1)
             pass
     elif platform.system() == "Darwin":
         # since psutil does not yield all processes on OSX unless sudoing
@@ -208,12 +209,12 @@ if __name__ == "__main__":
         if exists(settings_file):
             servers = []
             for node in get_nodes():
-                servers.append( create_expandrive_server(server_address="manager.sabeti-aws.net", 
+                servers.append( create_expandrive_server(server_address=server_address, 
                                                          username="", 
                                                          remote_path="/srv/samba/home/miseq", 
                                                          nickname=node["hostname"]+"_live",
                                                          port= int(node["port"]) ))
-                servers.append( create_expandrive_server(server_address="manager.sabeti-aws.net", 
+                servers.append( create_expandrive_server(server_address=server_address, 
                                                          username="", 
                                                          remote_path="/media/seqdata", 
                                                          nickname=node["hostname"]+"_archived",
