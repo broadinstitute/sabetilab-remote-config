@@ -60,6 +60,11 @@ os_specific = {
         "expandrive_settings_file_path": os.path.join( os.path.dirname(os.path.expandvars('%APPDATA%')), "Local", "ExpanDrive", "expandrive5.favorites.js" ),
         "process_name": "ExpanDrive.exe",
         "executable_path": "C:\Program Files (x86)\ExpanDrive\ExpanDrive.exe"
+    },
+    "win7":{
+        "expandrive_settings_file_path": os.path.join( os.path.dirname(os.path.expandvars('%APPDATA%')), "Local", "ExpanDrive", "expandrive5.favorites.js" ),
+        "process_name": "ExpanDrive.exe",
+        "executable_path": "C:\Program Files (x86)\ExpanDrive\ExpanDrive.exe"
     }
 }
 
@@ -71,6 +76,8 @@ def os_specific_vals():
         release = platform.release()
         if release == "10":
             return os_specific["win10"]
+        elif release == "7":
+            return os_specific["win7"]
         else:
             raise NotImplementedError("Support for your OS is not yet included")
 
@@ -204,7 +211,12 @@ if __name__ == "__main__":
                 servers.append( create_expandrive_server(server_address="manager.sabeti-aws.net", 
                                                          username="", 
                                                          remote_path="/srv/samba/home/miseq", 
-                                                         nickname=node["hostname"],
+                                                         nickname=node["hostname"]+"_live",
+                                                         port= int(node["port"]) ))
+                servers.append( create_expandrive_server(server_address="manager.sabeti-aws.net", 
+                                                         username="", 
+                                                         remote_path="/media/seqdata", 
+                                                         nickname=node["hostname"]+"_archived",
                                                          port= int(node["port"]) ))
 
             print("Updating ExpanDrive")

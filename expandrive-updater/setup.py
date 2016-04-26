@@ -12,7 +12,7 @@ setup(
                 'packages': ['boto.cacerts', 'boto'],
                 }
             },
-        console=['get-all-dns-nodes.py'],
+        console=['update-expandrive-from-dns.py'],
         data_files=[(r'boto\cacerts', [r'C:\Python34\Lib\site-packages\boto\cacerts\cacerts.txt']),
                     (r'boto', [r'C:\Python34\Lib\site-packages\boto\endpoints.json'])],
         package_data = {
