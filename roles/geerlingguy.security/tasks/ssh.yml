@@ -8,6 +8,8 @@
   with_items:
     - regexp: "^PasswordAuthentication"
       line: "PasswordAuthentication {{ security_ssh_password_authentication }}"
+    - regexp: "^GatewayPorts"
+      line: "GatewayPorts {{ security_ssh_gateway_ports }}"
     - regexp: "^PermitRootLogin"
       line: "PermitRootLogin {{ security_ssh_permit_root_login }}"
     - regexp: "^Port"

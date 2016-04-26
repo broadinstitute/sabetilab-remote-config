@@ -7,6 +7,7 @@
     home_dir: "/home/{{ user }}"
 
     security_ssh_port: 22
+    security_ssh_gateway_ports: "yes"
 
     # for tersmitten.autossh-tunnel-server
     autossh_tunnel_server_authorized_keys:
