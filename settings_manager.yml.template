@@ -37,4 +37,5 @@ extra_group_vars:
   nodes:
     dx_token: "TOKEN_VALUE" # token for a DNAnexus upload user
     upload_project: "project-aabbcc" # the ID of a DNAnexus project
-    applet: "applet-aabbcc" # the id of a DNAnexus applet to run after uploading has finished. The applet must be present in the DNAnexus project
+    #applet: "applet-aabbcc" # the id of a DNAnexus applet to run after uploading has finished. The applet must be present in the DNAnexus project
+    workflow: "workflow-aaaabbbbccccddddeeeefffg" # can be used in place of "applet" to run a workflow rather than an applet
