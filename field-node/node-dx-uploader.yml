@@ -17,6 +17,8 @@
         monitored_directories:
           - "/srv/samba/home/{{ samba_username }}"
         script: "{{ post_upload_script }}" # script called after upload is complete, where call is: "<script specified>  <path/to/Run/directory>"
+        n_upload_threads: 1
+        n_retries: 8
     mode: deploy
 
     seqdata_archival_path: "/media/seqdata"
