@@ -10,6 +10,8 @@
       line: "PasswordAuthentication {{ security_ssh_password_authentication }}"
     - regexp: "^GatewayPorts"
       line: "GatewayPorts {{ security_ssh_gateway_ports }}"
+    - regexp: "^ClientAliveInterval"
+      line: "ClientAliveInterval {{ security_client_alive_interval }}"
     - regexp: "^PermitRootLogin"
       line: "PermitRootLogin {{ security_ssh_permit_root_login }}"
     - regexp: "^Port"
