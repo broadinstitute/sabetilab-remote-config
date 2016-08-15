@@ -8,6 +8,7 @@
 
     security_ssh_port: 22
     security_ssh_gateway_ports: "yes"
+    security_client_alive_interval: "120"
 
     # for tersmitten.autossh-tunnel-server
     autossh_tunnel_server_authorized_keys:
