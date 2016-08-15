@@ -10,7 +10,7 @@ StandardOutput=kmsg+console
 Type=simple
 PIDFile=/var/run/autossh/autossh-tunnel-client.pid
 
-Restart=on-failure
+Restart=always
 RestartSec=60
 
 ExecStartPre=/usr/bin/test -x /usr/bin/autossh
