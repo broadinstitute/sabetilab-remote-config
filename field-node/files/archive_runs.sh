@@ -12,9 +12,9 @@ do
     echo "${base} already exists; skipping archive creation."
   else
     echo "${base} does not exist; creating archive..."
-    tar -czf "${base}.tar.gz" "$dir"
-    gsutil cp "${base}.tar.gz" "${bucket}${base}.tar.gz"
-    rm "${base}.tar.gz"
+    tar -cvzf "/tmp/${base}.tar.gz" "$dir"
+    gsutil cp "/tmp/${base}.tar.gz" "${bucket}${base}.tar.gz"
+    rm "/tmp/${base}.tar.gz"
     #echo "$base"
     #echo "$dir"
   fi
