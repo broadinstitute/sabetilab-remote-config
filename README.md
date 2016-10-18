@@ -285,7 +285,7 @@ If you have difficulty connecting to the manager via ssh, or if it prompts repea
 
 Note that the username to be used for ansible connections must be specified in `settings_manager.yml`. Any ansible playbooks run with ``--sudo`` must use this same user, and the sudo password must be the same across all nodes on which the playbook is to be run. In must cases the user should be one present in `github_usernames_with_sudo_access`.
 
-In the event an exfat USB drive is not mounting, run `fusermount -u /media/broken-mount-point`. If this does not work, try `systemctl reset-failed` if "Unit is bound to inactive unit dev-disk-by" is present in `/var/log/syslog`.
+In the event an exfat USB drive is not mounting, run `fusermount -u /media/broken-mount-point`. If this does not work, try `systemctl reset-failed` if "Unit is bound to inactive unit dev-disk-by" is present in `/var/log/syslog`. In the event that the drive is disconnected without being properly ejected, fuse-exfat, and the drive, may have issues. To repair, plug into an OSX machine and run `sudo fsck_exfat -d <diskID_here>`. OSX may detect the drive has not been properly ejected and run fsck automatically. This can be checked by running `sudo lsof | grep <diskID_here>`. 
 
 If time-rotated moves to external storage is desired, the external drive should be formatted ExFAT, and the drive name (label) should be `SEQDATA`.
 
