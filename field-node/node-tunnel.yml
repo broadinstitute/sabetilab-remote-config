@@ -39,6 +39,12 @@
         minute: "5,35"
         job: "/opt/field-node/update_route53.py"
 
+    - name: setup cron job to restart autossh service every day
+      cron: 
+        name: restart autossh service
+        hour: "4"
+        job: "service autossh-tunnel-client restart"
+
     - name: Update Route53 zone record for this node
       command: "/opt/field-node/update_route53.py"
 

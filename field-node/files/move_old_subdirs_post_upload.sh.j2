@@ -18,8 +18,8 @@ if [ -d "$DEST_DIR" ]; then
   if $(mount | grep "$DEST_DIR" &> /dev/null); then
   
     # The MiSeq expects the run directory to be present during the post-run wash stage, even if sequencing has finished.
-    # The wash takes ~20 minutes, so we'll wait for 30 minutes to give it a chance to finish before copying files.
-    sleep 1800
+    # The wash takes ~20 minutes, so we'll wait for 2 hours to give it a chance to finish before copying files.
+    sleep 7200
     # rsync key:
     # -r = recursive
     # -l = copy links

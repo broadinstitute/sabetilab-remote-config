@@ -32,5 +32,6 @@
         src: "./files/move_old_subdirs_post_upload.sh.j2" 
         dest: "{{ post_upload_script }}"
         mode: "0777"
+        force: yes
 
     - debug: msg="Configured DNAnexus uploader"
