@@ -39,6 +39,7 @@ class AnsibleInventory(object):
 
     @staticmethod
     def _get_txt_record_from_dns(fqdn):
+        #return subprocess.check_output(['dig', '-t', 'TXT', fqdn, '+short'])
         return subprocess.check_output(['dig', '-t', 'TXT', fqdn, '@ns-491.awsdns-61.com', '+short'])
 
     @staticmethod
