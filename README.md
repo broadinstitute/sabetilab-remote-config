@@ -311,3 +311,15 @@ As an alternative to the `setup-manager.sh` script, the management node can be d
 `vagrant up`
 
 ### field nodes
+
+In debugging the samba shared drive, the following commands can be helpful when run on a field node:
+
+List active samba connections to the samba server:
+`sudo smbstatus -b`
+
+View samba mount from localhost:
+```
+smbclient -U <samba_username>  //<hostname>/miseq
+# (enter password and 'ls')
+```
+```
