@@ -1,2 +1,5 @@
-[local]
+[nodes]
+localhost ansible_connection=local ansible_python_interpreter=python
+
+[managers]
 localhost ansible_connection=local ansible_python_interpreter=python
