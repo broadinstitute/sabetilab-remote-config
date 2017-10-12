@@ -75,7 +75,7 @@ To enable monitoring:
 
 manually ssh to the machine `ssh manager.example.com` and set your root password if prompted, then:
 
-`ansible-playbook -i dynamic-inventory.py --sudo --ask-sudo-pass management-node/manager-sensu.yml`
+`ansible-playbook -i dynamic-inventory.py --become --ask-become-pass management-node/manager-sensu.yml`
 
 ### Set up the field nodes
 
@@ -92,11 +92,11 @@ On each field node, run:
 
 To enable monitoring:
 
-`ansible-playbook ./field-node/node-sensu.yml -i "[nodes]localhost," --connection=local --sudo --ask-sudo-pass`
+`ansible-playbook ./field-node/node-sensu.yml -i "[nodes]localhost," --connection=local --become --ask-become-pass`
 
 From remote:
 
-`ansible-playbook -i dynamic-inventory.py --sudo --ask-sudo-pass ./field-node/node-sensu.yml`
+`ansible-playbook -i dynamic-inventory.py --become --ask-become-pass ./field-node/node-sensu.yml`
 
 #### Samba shares
 
@@ -116,17 +116,17 @@ After the project and user have been created, and the values have been set in `s
 
 **Note:** This playbook must be run AFTER a samba user has been created by `field-node/node-samba.yml`. A samba user should already exist if the field node was configured via `setup_field_node_local.sh` or by running the playbook `field-node/node-full.yml`. The playbook will prompt for the samba username of the user to sync to DNAnexus. In most cases this should be the samba user created earlier in the configuration process.
 
-`ansible-playbook ./field-node/node-dx-uploader.yml -i "[nodes]localhost," --connection=local --sudo --ask-sudo-pass`
+`ansible-playbook ./field-node/node-dx-uploader.yml -i "[nodes]localhost," --connection=local --become --ask-become-pass`
 
 From remote:
 
-`ansible-playbook -i dynamic-inventory.py --sudo --ask-sudo-pass field-node/node-dx-uploader.yml`
+`ansible-playbook -i dynamic-inventory.py --become --ask-become-pass field-node/node-dx-uploader.yml`
 
 ## Making changes
 
 To perform an `apt-get update` and `apt-get upgrade` on the management node and each of the field nodes:
 
-`ansible-playbook -i dynamic-inventory.py --sudo --ask-sudo-pass common-playbooks/update-upgrade-apt-packages.yml`
+`ansible-playbook -i dynamic-inventory.py --become --ask-become-pass common-playbooks/update-upgrade-apt-packages.yml`
 
 ### management node
 
@@ -142,7 +142,7 @@ To issue ad hoc commands to the management node, ensure the address is listed in
 
 To run a playbook on the management node:
 
-`ansible-playbook -i ./dynamic-inventory.py [--sudo --ask-sudo-pass] some-playbook.yml`
+`ansible-playbook -i ./dynamic-inventory.py [--become --ask-become-pass] some-playbook.yml`
 
 ### field node
 
@@ -152,27 +152,27 @@ Before running remote Ansible commands on the nodes, make sure you can connect t
 
 To issue one-off ansible commands to the nodes:
 
-`ansible nodes -i dynamic-inventory.py [--sudo --ask-sudo-pass] -m shell -a "some_command"`
+`ansible nodes -i dynamic-inventory.py [--become --ask-become-pass] -m shell -a "some_command"`
 
 Or for one node:
 
-`ansible node-3 -i dynamic-inventory.py [--sudo --ask-sudo-pass] -m shell -a "some_command"`
+`ansible node-3 -i dynamic-inventory.py [--become --ask-become-pass] -m shell -a "some_command"`
 
 To run a playbook on all nodes (restricted by hosts in playbook):
 
-`ansible-playbook -i dynamic-inventory.py [--sudo --ask-sudo-pass] some-playbook.yml`
+`ansible-playbook -i dynamic-inventory.py [--become --ask-become-pass] some-playbook.yml`
 
 To run a playbook on one node:
 
-`ansible-playbook --limit node-3 -i dynamic-inventory.py [--sudo --ask-sudo-pass] some-playbook.yml`
+`ansible-playbook --limit node-3 -i dynamic-inventory.py [--become --ask-become-pass] some-playbook.yml`
 
 To reboot all nodes (note that this command may appear to fail, since a reboot prevents Ansible from receiving confirmation of command execution):
 
-`ansible nodes -i dynamic-inventory.py --sudo --ask-sudo-pass -m shell -a "reboot"`
+`ansible nodes -i dynamic-inventory.py --become --ask-become-pass -m shell -a "reboot"`
 
 To re-provision the field nodes from their full setup playbook:
 
-`ansible-playbook -i dynamic-inventory.py --sudo --ask-sudo-pass field-node/node-full.yml`
+`ansible-playbook -i dynamic-inventory.py --become --ask-become-pass field-node/node-full.yml`
 
 The following field node playbooks exist and may be used for more directed configuration changes:
 * `field-node/node-full.yml` (complete setup of field nodes including playbooks below)
@@ -184,6 +184,9 @@ The following field node playbooks exist and may be used for more directed confi
 * `field-node/node-sensu.yml` sets up monitoring on the field node
 * `field-node/node-dx-uploader.yml` sets up streaming upload to DNAnexus
 * `field-node/node-geoip.yml` prints the geographic location of each node
+* `field-node/compile-and-install-python.yml` This builds and installs Python 2.7.x from source
+* `field-node/node-set-sources-list-to-old-release.yaml` For End-of-Life Ubuntu releases, this updates the apt-source list to use the old-releases source repository
+
 ## Setup in the field
 
 ### Network configuration
@@ -292,7 +295,7 @@ ControlPath ~/.ssh/ssh_control_%h_%p_%r
 ControlPersist 10m
 ```
 
-Note that the username to be used for ansible connections must be specified in `settings_manager.yml`. Any ansible playbooks run with ``--sudo`` must use this same user, and the sudo password must be the same across all nodes on which the playbook is to be run. In must cases the user should be one present in `github_usernames_with_sudo_access`.
+Note that the username to be used for ansible connections must be specified in `settings_manager.yml`. Any ansible playbooks run with ``--become`` must use this same user, and the sudo password must be the same across all nodes on which the playbook is to be run. In must cases the user should be one present in `github_usernames_with_sudo_access`.
 
 In the event an exfat USB drive is not mounting, run `fusermount -u /media/broken-mount-point`. If this does not work, try `systemctl reset-failed` if "Unit is bound to inactive unit dev-disk-by" is present in `/var/log/syslog`. In the event that the drive is disconnected without being properly ejected, fuse-exfat, and the drive, may have issues. To repair, plug into an OSX machine and run `sudo fsck_exfat -d <diskID_here>`. OSX may detect the drive has not been properly ejected and run fsck automatically. This can be checked by running `sudo lsof | grep <diskID_here>`. 
 

@@ -1,0 +1,61 @@
+# NOTE: As Python is tightly integrated with Ubuntu, use this script at your own peril.
+# - hosts: nodes
+#   vars:
+#     python_version_to_install: "2.7.13"
+
+#   become: yes
+#   tasks:
+#     - name: "apt-get update"
+#       apt: update_cache=yes
+
+#     - name: "apt-get upgrade"
+#       apt: upgrade=dist
+
+#     - name: Check if python2.7 is already installed
+#       stat: path=/usr/local/bin/python2.7
+#       register: python
+
+#     - debug: 
+#         msg: "Python is installed: {{python.stat.exists}}"
+#       when: python.stat.exists
+
+#     - name: "get current python version"
+#       shell: python -V 2>&1 >/dev/null | perl -lape 's/\w+\s+(2\.\d{1,3}\.\d{1,3}).*/$1/g'
+#       register: python_version_reported
+#       when: python.stat.exists
+
+#     - debug: 
+#         msg: "Default Python version installed: {{python_version_reported.stdout}}"
+#       when: python.stat.exists
+
+#     - name: Ensure build infrastructure is installed
+#       apt: name={{ item }} state=latest
+#       with_items:
+#         - build-essential
+#         - checkinstall
+#       when: not python.stat.exists or (python_version_reported.stdout != python_version_to_install)
+
+#     - name: Ensure Python build dependencies are installed
+#       apt: name={{ item }} state=build-dep
+#       with_items:
+#         - python2.7
+#       when: not python.stat.exists or (python_version_reported.stdout != python_version_to_install)
+
+#     - name: Download Python
+#       get_url: url=https://www.python.org/ftp/python/{{ python_version_to_install }}/Python-{{ python_version_to_install }}.tgz
+#                dest=/tmp/Python-{{ python_version_to_install }}.tar
+#       when: not python.stat.exists or (python_version_reported.stdout != python_version_to_install)
+
+#     - name: Unpack Python
+#       unarchive: src=/tmp/Python-{{ python_version_to_install }}.tar dest=/tmp copy=no
+#       when: not python.stat.exists or (python_version_reported.stdout != python_version_to_install)
+
+#     - name: Configure, compile and install Python
+#       shell: cd /tmp/Python-{{ python_version_to_install }} && {{ item }}
+#       with_items:
+#         - ./configure --enable-shared --with-system-ffi --enable-optimizations --enable-ipv6 --enable-unicode=ucs4
+#         - make clean
+#         - make
+#         #- checkinstall --install -y make install # use with caution as it will override the system default
+#         - checkinstall --install -y make altinstall
+#       when: not python.stat.exists or (python_version_reported.stdout != python_version_to_install)

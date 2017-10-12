@@ -10,7 +10,7 @@
     security_ssh_port: "{{ ssh_port }}"
 
   roles:
-    - geerlingguy.security
+    - geerlingguy.security # this will disconnect SSH, and must be run locally
 
   tasks:
     - name: Install build dependencies
@@ -48,6 +48,9 @@
 
     - name: Install python-dev
       apt: pkg=python-dev state=installed
+
+    - name: Install speedtest-cli
+      apt: pkg=speedtest-cli state=installed
 
     - name: download pip installer script
       get_url: 

@@ -1,0 +1,32 @@
+# This playbook copies in an apt sources list for old releases, 
+# and sets the release name dynamically
+
+- hosts: nodes
+  become: yes
+  tasks:
+    - name: get release name
+      shell: "lsb_release -c -s"
+      args:
+        warn: False
+      register: lsb_release_name
+
+    - debug: msg="{{lsb_release_name.stdout}}"
+
+    - set_fact:
+        release_name: "{{ lsb_release_name.stdout }}"
+
+    - debug: msg="{{release_name}}"
+
+    - name: Copy in /etc/apt/sources.list for old-releases
+      template: 
+        src: "./files/sources.list.old-release.j2" 
+        dest: "/etc/apt/sources.list"
+        owner: root
+        group: root
+        mode: "0664"
+
+    - name: "apt-key update"
+      shell: apt-key update -y
+
+    - name: "apt-get update"
+      apt: update_cache=yes

@@ -1,7 +1,7 @@
 ---
-- include: install/main.yml
-- include: configuration.yml
-- include: plugins.yml
-- include: vhost.yml
-- include: federation.yml
+- import_playbook: install/main.yml
+- import_playbook: configuration.yml
+- import_playbook: plugins.yml
+- import_playbook: vhost.yml
+- import_playbook: federation.yml
   when: rabbitmq_federation
