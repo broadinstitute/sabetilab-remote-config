@@ -325,4 +325,3 @@ View samba mount from localhost:
 smbclient -U <samba_username>  //<hostname>/miseq
 # (enter password and 'ls')
 ```
-```
