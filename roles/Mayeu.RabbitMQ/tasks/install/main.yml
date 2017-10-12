@@ -1,7 +1,7 @@
 ---
 # Debian install
-- include: debian.yml
+- import_playbook: debian.yml
   when: ansible_os_family == 'Debian'
 
-- include: redhat.yml
+- import_playbook: redhat.yml
   when: ansible_os_family == 'RedHat'
