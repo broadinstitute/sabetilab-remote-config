@@ -1,9 +1,12 @@
 - hosts: managers
   environment:
     PLACEHOLDER_VAR: "foobar"
+
+  vars_files:
+    - "../settings_manager.yml"
   vars:
     # Replace with ansible_user in ansible 2.0
-    user: "{{ ansible_ssh_user }}"
+    user: "{{ ansible_user }}"
     home_dir: "/home/{{ user }}"
 
     security_ssh_port: 22
@@ -49,19 +52,19 @@
 
     - name: add users 
       user: "name={{item|quote}} shell=/bin/bash"
-      with_items: "{{github_usernames_with_access}}"
+      with_items: "{{ github_usernames_with_access }}"
 
     - name: add users with sudo access
       user: "name={{item|quote}} group=sudo shell=/bin/bash" # use "admin" for Ubuntu <11.10, and "sudo" for later
-      with_items: "{{github_usernames_with_sudo_access}}"
+      with_items: "{{ github_usernames_with_sudo_access }}"
 
     - name: add ssh keys for users from GitHub
       authorized_key: "user={{item|quote}} key=https://github.com/{{item}}.keys"
-      with_items: "{{github_usernames_with_access}}"
+      with_items: "{{ github_usernames_with_access }}"
 
     - name: add ssh keys for sudo users from GitHub
       authorized_key: "user={{item|quote}} key=https://github.com/{{item}}.keys"
-      with_items: "{{github_usernames_with_sudo_access}}"
+      with_items: "{{ github_usernames_with_sudo_access }}"
 
     - name: Copy in password clearing script
       template: 

@@ -1,7 +1,7 @@
 # This playbook copies in an apt sources list for old releases, 
 # and sets the release name dynamically
 
-- hosts: nodes
+- hosts: all
   become: yes
   tasks:
     - name: get release name
