@@ -19,6 +19,8 @@
         script: "{{ post_upload_script }}" # script called after upload is complete, where call is: "<script specified>  <path/to/Run/directory>"
         n_upload_threads: 1
         n_retries: 8
+        min_size: 500 # size needed to upload, in MB
+        min_interval: 900 # sync check period, in seconds
     mode: deploy
 
     seqdata_archival_path: "/media/seqdata"
