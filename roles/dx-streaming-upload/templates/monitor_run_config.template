@@ -34,3 +34,6 @@ min_size: 500
 
 # min sync check interval (in seconds)
 min_interval: 900
+
+# number of concurrent uploads
+n_streaming_threads: 1
