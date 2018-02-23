@@ -21,6 +21,7 @@
         n_retries: 8
         min_size: 500 # size needed to upload, in MB
         min_interval: 900 # sync check period, in seconds
+        n_streaming_threads: 3
     mode: deploy
 
     seqdata_archival_path: "/media/seqdata"
