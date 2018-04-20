@@ -1,4 +1,5 @@
-- hosts: nodes
+- hosts: 
+    - nodes
 
   environment:
     PLACEHOLDER_VAR: "foobar"
