@@ -23,10 +23,11 @@ REMOTE_LISTEN_PORT=$(( ( RANDOM % 1000 )  + 32000 )) # pick a random port in the
 echo "Domain parsed from $SETTINGS_YML as \"$DOMAIN_NAME\""
 echo ""
 echo "========================================================"
-read -p "Enter the node SSH daemon listen port [22]: " SSH_PORT
-SSH_PORT=${SSH_PORT:-"6112"} # set default if not specified
+DEFAULT_SSH_PORT=6112
+read -p "Enter the node SSH daemon listen port [$DEFAULT_SSH_PORT]: " SSH_PORT
+SSH_PORT=${SSH_PORT:-"$DEFAULT_SSH_PORT"} # set default if not specified
 
-read -p "Enter the SSH tunnel port to be accessed on the relay (default:dynamic): " SSH_TUNNEL_PORT
+read -p "Enter the SSH tunnel port to be accessed on the relay (default:0[dynamic]): " SSH_TUNNEL_PORT
 SSH_TUNNEL_PORT=${SSH_TUNNEL_PORT:-"0"}
 
 read -p "Enter would you like the hostname of this machine to be [$(hostname)]: " NODEHOSTNAME
@@ -50,7 +51,12 @@ echo "127.0.0.1    localhost.localdomain localhost" > /etc/hosts
 echo "127.0.1.1    $NODEHOSTNAME.$DOMAIN_NAME $NODEHOSTNAME" >> /etc/hosts
 echo "" >> /etc/hosts
 hostnamectl set-hostname $NODEHOSTNAME
-grep "search $DOMAIN_NAME" /etc/resolvconf/resolv.conf.d/base || echo "search $DOMAIN_NAME" >> /etc/resolvconf/resolv.conf.d/base
+#grep "Domains=$DOMAIN_NAME" /etc/systemd/resolv.conf || echo "Domains=$DOMAIN_NAME" >> /etc/systemd/resolv.conf
+pushd /etc/systemd
+sed -E -i.bak "s/\#Domains=/Domains=/g" /etc/systemd/resolved.conf && rm resolved.conf.bak
+sed -E -i.bak "/Domains=/s/([ ]?$DOMAIN_NAME[ ]?)//g" /etc/systemd/resolved.conf && rm resolved.conf.bak
+sed -E -i.bak "s/(Domains=)([^\n]*)/\1$DOMAIN_NAME \2/g" /etc/systemd/resolved.conf && rm resolved.conf.bak
+popd
 
 #ansible-playbook ./field-node/node-full.yml -i ./production --connection=local --sudo # -vvvv
-ansible-playbook ./field-node/node-full.yml -i "[nodes]localhost," --connection=local --sudo --ask-sudo-pass --extra-vars="ssh_port=$SSH_PORT ssh_tunnel_port=$SSH_TUNNEL_PORT"
+ansible-playbook ./field-node/node-full.yml -i local_inventory_nodes --become --ask-become-pass --extra-vars="ssh_port=$SSH_PORT ssh_tunnel_port=$SSH_TUNNEL_PORT"
