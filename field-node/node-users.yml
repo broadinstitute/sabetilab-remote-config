@@ -41,3 +41,18 @@
     - name: Clear and expire passwords so users are promped at first login
       command: "/opt/field-node/clear_and_expire_password.sh {{item}}"
       with_items: "{{ local_usernames_with_access + local_usernames_with_sudo_access + github_usernames_with_access + github_usernames_with_sudo_access }}"
+
+    - name: Copy in user preference script
+      template: 
+        src: "./files/set-user-pref-defaults.sh" 
+        dest: "/opt/field-node/set-user-pref-defaults.sh"
+        mode: "0744"
+
+    - name: get list of users
+      shell: "cut -d: -f1 /etc/passwd"
+      register: user_list_cmd
+
+    - name: Change user preference defaults (scroll orientation, etc.)
+      command: "/opt/field-node/set-user-pref-defaults.sh {{item}}"
+      with_items:
+        - "{{ user_list_cmd.stdout_lines }}"

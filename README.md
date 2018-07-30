@@ -71,15 +71,9 @@ From the local machine, deploy the manager by calling:
 
 This helper script will use Vagrant to initialize an EC2 instances which will then be configured via Ansible. It will also update the Route53 `A` record for the manager to have the correct IP address for the instance. After the manager has been set up, you will be able to connect to it directly via SSH (detailed below).
 
-To enable monitoring:
-
-manually ssh to the machine `ssh manager.example.com` and set your root password if prompted, then:
-
-`ansible-playbook -i dynamic-inventory.py --become --ask-become-pass management-node/manager-sensu.yml`
-
 ### Set up the field nodes
 
-The field nodes should be running Ubuntu 15.10. If hibernation ability is desired, ensure the machine is capable (via `pm-hibernate`), that the Product Name (via `dmidecode -s system-product-name`) is listed in `node-enable-hibernate.yml`, and ensure the swap partition size is larger than the physical RAM capacity. 
+The field nodes should be running Ubuntu 18.04. If hibernation ability is desired, ensure the machine is capable (via `pm-hibernate`), that the Product Name (via `dmidecode -s system-product-name`) is listed in `node-enable-hibernate.yml`, and ensure the swap partition size is larger than the physical RAM capacity. 
 Install the operating system and pick a hostname. The hostname will become the subdomain automatically given to the field node, and should match an entry found in the settings file, `settings_manager.sh`, under `connected_nodes`. It may be desirable to enable "Wake on AC" in the BIOS options if such an option is available.
 
 **Note:** Ubuntu 16.04 LTS is currently incompatible due to a [known kernel bug that breaks hibernation](https://bugs.launchpad.net/ubuntu/+source/linux/+bug/1566302). If/when the kernel bug is fixed, version 16.04 and later may be supported. Versions earlier than 15.10 are unsupported.
@@ -91,12 +85,6 @@ On each field node, run:
 `sudo ./setup_field_node_local.sh`
 
 To enable monitoring:
-
-`ansible-playbook ./field-node/node-sensu.yml -i local_inventory_nodes --become --ask-become-pass`
-
-From remote:
-
-`ansible-playbook -i dynamic-inventory.py --become --ask-become-pass ./field-node/node-sensu.yml`
 
 #### Samba shares
 

@@ -46,6 +46,9 @@
     - name: Install tmux
       apt: pkg=tmux state=present
 
+    - name: Install net-tools
+      apt: pkg=net-tools state=present
+
     - name: Install python-dev
       apt: pkg=python-dev state=present
 
