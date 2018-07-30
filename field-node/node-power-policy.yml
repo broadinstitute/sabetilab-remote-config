@@ -71,7 +71,7 @@
       lineinfile: 
         dest: "/etc/default/grub" 
         regexp: '^GRUB_CMDLINE_LINUX_DEFAULT=' 
-        line: 'GRUB_CMDLINE_LINUX_DEFAULT="quiet splash resume={{swap_dev}}"' 
+        line: 'GRUB_CMDLINE_LINUX_DEFAULT="quiet splash resume={{swap_dev.stdout}}"' 
         owner: root 
         group: root 
         mode: 0644
@@ -85,7 +85,7 @@
       lineinfile: 
         dest: "/etc/initramfs-tools/conf.d/resume" 
         regexp: '^RESUME=' 
-        line: 'RESUME={{swap_dev}}' 
+        line: 'RESUME={{swap_dev.stdout}}' 
         owner: root 
         group: root 
         mode: 0644
