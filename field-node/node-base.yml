@@ -22,6 +22,9 @@
     - name: Install openssh-server
       apt: pkg=openssh-server state=present
 
+    - name: Install aptitude
+      apt: pkg=aptitude state=present
+
     - name: Install git
       apt: pkg=git state=present
 

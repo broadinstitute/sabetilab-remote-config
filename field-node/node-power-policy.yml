@@ -53,6 +53,10 @@
       apt: pkg=pm-utils state=present
       when: (model_number.stdout in machine_types_to_hibernate) and (swap_size.stdout > mem_size.stdout)
 
+    - name: Install uswsusp
+      apt: pkg=uswsusp state=present
+      when: (model_number.stdout in machine_types_to_hibernate) and (swap_size.stdout > mem_size.stdout)
+
     - name: Ensure hibernation file is not present on incompatible machines
       shell: /bin/bash -c "[ -f {{hibernation_policy_file_path}} ] && rm -f {{hibernation_policy_file_path}} || echo 'hibernation policy file not found'"
       when: (swap_size.stdout < mem_size.stdout)
