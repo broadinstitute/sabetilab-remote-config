@@ -52,11 +52,11 @@ echo "127.0.1.1    $NODEHOSTNAME.$DOMAIN_NAME $NODEHOSTNAME" >> /etc/hosts
 echo "" >> /etc/hosts
 hostnamectl set-hostname $NODEHOSTNAME
 #grep "Domains=$DOMAIN_NAME" /etc/systemd/resolv.conf || echo "Domains=$DOMAIN_NAME" >> /etc/systemd/resolv.conf
-pushd /etc/systemd
+pushd /etc/systemd > /dev/null
 sed -E -i.bak "s/\#Domains=/Domains=/g" /etc/systemd/resolved.conf && rm resolved.conf.bak
 sed -E -i.bak "/Domains=/s/([ ]?$DOMAIN_NAME[ ]?)//g" /etc/systemd/resolved.conf && rm resolved.conf.bak
 sed -E -i.bak "s/(Domains=)([^\n]*)/\1$DOMAIN_NAME \2/g" /etc/systemd/resolved.conf && rm resolved.conf.bak
-popd
+popd > /dev/null
 
 #ansible-playbook ./field-node/node-full.yml -i dynamic-inventory.py --connection=local --sudo # -vvvv
-ansible-playbook ./field-node/node-full.yml -i dynamic-inventory.py --connection=local --limit $NODEHOSTNAME --become --ask-become-pass --extra-vars="ssh_port=$SSH_PORT ssh_tunnel_port=$SSH_TUNNEL_PORT"
+ansible-playbook ./field-node/node-full.yml -i dynamic-inventory.py --connection=local --limit $NODEHOSTNAME --become --extra-vars="ssh_port=$SSH_PORT ssh_tunnel_port=$SSH_TUNNEL_PORT"
