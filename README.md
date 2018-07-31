@@ -104,7 +104,7 @@ After the project and user have been created, and the values have been set in `s
 
 **Note:** This playbook must be run AFTER a samba user has been created by `field-node/node-samba.yml`. A samba user should already exist if the field node was configured via `setup_field_node_local.sh` or by running the playbook `field-node/node-full.yml`. The playbook will prompt for the samba username of the user to sync to DNAnexus. In most cases this should be the samba user created earlier in the configuration process.
 
-`ansible-playbook ./field-node/node-dx-uploader.yml -i local_inventory_nodes --become --ask-become-pass`
+`ansible-playbook ./field-node/node-dx-uploader.yml -i dynamic-inventory.py --connection=local --limit $(hostname) --become --ask-become-pass`
 
 From remote:
 
