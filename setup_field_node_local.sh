@@ -20,6 +20,9 @@ DOMAIN_NAME=$(cat $SCRIPT_DIRECTORY/$SETTINGS_YML | grep "^domain_name" | perl -
 
 REMOTE_LISTEN_PORT=$(( ( RANDOM % 1000 )  + 32000 )) # pick a random port in the range [32000,32000]
 
+# make dynamic-inventory.py executable
+chmod +x $SCRIPT_DIRECTORY/dynamic-inventory.py
+
 echo "Domain parsed from $SETTINGS_YML as \"$DOMAIN_NAME\""
 echo ""
 echo "========================================================"
