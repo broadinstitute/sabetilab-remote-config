@@ -58,5 +58,5 @@ sed -E -i.bak "/Domains=/s/([ ]?$DOMAIN_NAME[ ]?)//g" /etc/systemd/resolved.conf
 sed -E -i.bak "s/(Domains=)([^\n]*)/\1$DOMAIN_NAME \2/g" /etc/systemd/resolved.conf && rm resolved.conf.bak
 popd
 
-#ansible-playbook ./field-node/node-full.yml -i ./production --connection=local --sudo # -vvvv
-ansible-playbook ./field-node/node-full.yml -i local_inventory_nodes --become --ask-become-pass --extra-vars="ssh_port=$SSH_PORT ssh_tunnel_port=$SSH_TUNNEL_PORT"
+#ansible-playbook ./field-node/node-full.yml -i dynamic-inventory.py --connection=local --sudo # -vvvv
+ansible-playbook ./field-node/node-full.yml -i dynamic-inventory.py --connection=local --limit $NODEHOSTNAME --become --ask-become-pass --extra-vars="ssh_port=$SSH_PORT ssh_tunnel_port=$SSH_TUNNEL_PORT"
