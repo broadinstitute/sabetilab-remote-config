@@ -9,7 +9,7 @@ from collections import defaultdict
 import yaml
 
 class AnsibleInventory(object):
-    def __init__(self):
+    def __init__(self, local=False):
         with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "settings_manager.yml"), "r") as settings_file:
            self.settings_object = yaml.load(settings_file)
 
@@ -17,9 +17,9 @@ class AnsibleInventory(object):
         self.manager_domain = "manager." + self.domain
         self.username = self.settings_object["ssh_username"]
 
-        # base inventory
-        self.inventory = {
-            "nodes"   : {
+
+        if not local:
+            nodes = {
                 "hosts"   : self.settings_object["connected_nodes"],
                 "vars"    : {
                     "ansible_ssh_common_args": '-o ProxyCommand="ssh -W %h:%p {user}@{manager}"'.format(user=self.username, manager=self.manager_domain),
@@ -27,14 +27,27 @@ class AnsibleInventory(object):
                     "ansible_user"           : "{user}".format(user=self.username),
                     "ssh_port"               : "6112"
                 }
-            },
+            }
+        else:
+            nodes = {
+                "hosts" : ["localhost"],
+                "vars" : {
+                    "ansible_connection" : "local"
+                }
+            }
+
+        # base inventory
+        self.inventory = {
+            "nodes"   : nodes,
             "managers"    : [ self.manager_domain ],
             "_meta" : {
                   "hostvars" : {}
                }
         }
 
-        self._populate_host_ports()
+        if not local:
+            self._populate_host_ports()
+
         self._populate_vars_from_settings()
 
     @staticmethod
@@ -44,7 +57,7 @@ class AnsibleInventory(object):
 
     @staticmethod
     def _get_port_from_txt_record(txt_record):
-        port_num_matches = re.findall('^"?P(\d+).*;.*"?$', txt_record.decode("utf-8"))
+        port_num_matches = re.findall(r'^"?P(\d+).*;.*"?$', txt_record.decode("utf-8"))
         port_num = ""
         if len(port_num_matches) > 0:
             port_num = port_num_matches[0]
@@ -88,7 +101,7 @@ class AnsibleInventory(object):
         return self.dump_json({})
     
 if __name__ == '__main__':
-    inv = AnsibleInventory()
+    inv = AnsibleInventory(local=True if os.environ.get("LOCAL_ANSIBLE","").lower()=="true" else False)
 
     if len(sys.argv) == 2 and (sys.argv[1] == '--list'):
         print(inv.grouplist())
