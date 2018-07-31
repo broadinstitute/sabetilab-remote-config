@@ -65,7 +65,7 @@
       local_action: wait_for timeout=50
 
     - name: get new port from DNS
-      local_action: shell dig TXT +short {{ inventory_hostname }}.{{ domain_name }} @ns-491.awsdns-61.com | perl -lape 's/^"P(?<port_num>[0-9]+)\\.*"/$+{port_num}/g'
+      local_action: shell dig TXT +short {{ inventory_hostname }}.{{ domain_name }} @ns-491.awsdns-61.com | perl -lape 's/^"P(?<port_num>[0-9]+).*"/$+{port_num}/g'
       register: tunnel_port
 
     - debug: msg="Observed change in tunnel port for {{ inventory_hostname }} {{ ansible_port }} -> {{ tunnel_port.stdout }}"

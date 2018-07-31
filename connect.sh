@@ -27,7 +27,7 @@ MANAGER_IP=$(dig A +short $RELAY_DOMAIN @ns-491.awsdns-61.com)
 
 # get the port from the DNS TXT record for this subdomain
 # use the AWS nameserver to ensure most current DNS records
-PORT_ON_RELAY=$(dig TXT +short $NODE_DOMAIN @ns-491.awsdns-61.com | perl -lape 's/^"P(?<port_num>[0-9]+)\\.*"/$+{port_num}/g')
+PORT_ON_RELAY=$(dig TXT +short $NODE_DOMAIN @ns-491.awsdns-61.com | perl -lape 's/^"P(?<port_num>[0-9]+).*"/$+{port_num}/g')
 
 if [[ -z "$PORT_ON_RELAY" || "$PORT_ON_RELAY" == " " ]]; then
         echo "The TXT record for the subdomain specified does begin have a ^PNNN; ... entry"
