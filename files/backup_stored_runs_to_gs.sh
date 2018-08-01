@@ -31,7 +31,7 @@ do
 
     # if pigz is available, use it
     if [ -x "$(command -v pigz)" ]; then
-      tar cf - "$dir" | pigz > "/tmp/${base}.tar.gz"
+      tar cf - "$dir" | pigz -9 > "/tmp/${base}.tar.gz"
     else
       tar -czf "/tmp/${base}.tar.gz" "$dir"
     fi
