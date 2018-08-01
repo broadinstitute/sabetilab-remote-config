@@ -28,7 +28,14 @@ do
     echo "${base} already exists; skipping archive creation."
   else
     echo "${base} does not exist; creating archive..."
-    tar -czf "/tmp/${base}.tar.gz" "$dir"
+
+    # if pigz is available, use it
+    if [ -x "$(command -v pigz)" ]; then
+      tar cf - "$dir" | pigz > "/tmp/${base}.tar.gz"
+    else
+      tar -czf "/tmp/${base}.tar.gz" "$dir"
+    fi
+
     gsutil cp "/tmp/${base}.tar.gz" "${bucket}${base}.tar.gz"
     rm "/tmp/${base}.tar.gz"
     #echo "$base"
