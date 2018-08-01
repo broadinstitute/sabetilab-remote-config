@@ -14,16 +14,22 @@
 
   tasks:
     - name: Install build dependencies
-      apt: pkg=build-essential state=installed
+      apt: pkg=build-essential state=present
 
     - name: Install htop
-      apt: pkg=htop state=installed
+      apt: pkg=htop state=present
+
+    - name: Install pigz
+      apt: pkg=pigz state=present
 
     - name: Install openssh-server
-      apt: pkg=openssh-server state=installed
+      apt: pkg=openssh-server state=present
+
+    - name: Install aptitude
+      apt: pkg=aptitude state=present
 
     - name: Install git
-      apt: pkg=git state=installed
+      apt: pkg=git state=present
 
     # If using the dual-NIC expresscard34 card with Realtek 8168
     # - name: Install dual-nic driver
@@ -41,16 +47,19 @@
     #   when: enp12s0_service_file.changed
 
     - name: Install ansible
-      apt: pkg=ansible state=installed
+      apt: pkg=ansible state=present
 
     - name: Install tmux
-      apt: pkg=tmux state=installed
+      apt: pkg=tmux state=present
+
+    - name: Install net-tools
+      apt: pkg=net-tools state=present
 
     - name: Install python-dev
-      apt: pkg=python-dev state=installed
+      apt: pkg=python-dev state=present
 
     - name: Install speedtest-cli
-      apt: pkg=speedtest-cli state=installed
+      apt: pkg=speedtest-cli state=present
 
     - name: download pip installer script
       get_url: 
@@ -60,7 +69,7 @@
       register: pip_script_downloaded
     - name: install pip
       command: "python /opt/get-pip.py"
-      when: pip_script_downloaded|success
+      when: pip_script_downloaded is success
 
     - name: Create file copy destination on remote
       file: path=/opt/field-node state=directory mode=0755

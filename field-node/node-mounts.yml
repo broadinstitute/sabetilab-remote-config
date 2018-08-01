@@ -1,8 +1,9 @@
 - hosts: nodes
 
   tasks:
+    - debug: msg="preparing mounts..."
     - name: Install exfat-fuse
-      apt: pkg=exfat-fuse state=installed
+      apt: pkg=exfat-fuse state=present
 
     - mount: 
        name: "/media/seqdata"

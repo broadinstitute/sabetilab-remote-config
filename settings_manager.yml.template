@@ -32,6 +32,15 @@ extra_host_vars:
     dx_token: "TOKEN_VALUE" # token for a DNAnexus upload user
     upload_project: "project-aaaaabbbb123" # the ID of a DNAnexus project
     applet: "applet-aabbcc" # the id of a DNAnexus applet to run after uploading has finished. The applet must be present in the DNAnexus project
+    # the api token allows the demux launcher to start independent demux jobs per-lane that do not kill the parent job on failure
+    # it should be in a project accessible only to the dx_token
+    downstream_input:
+      api_token:
+        $dnanexus_link:
+          id: file-asdasdasdasd
+          project: project-asdasdasdasd
+      folder: /
+      sequencing_center: BI
 
 extra_group_vars:
   nodes:

@@ -14,6 +14,7 @@
     machine_types_to_hibernate:
       - "Precision M4800"
       - "Precision 7510" # REQUIRES BIOS >1.4.8 
+      - "Precision 7710"
 
   tasks:
     - name: get machine swap partition size (kB)
@@ -48,9 +49,66 @@
         mode: "0744"
       when: (model_number.stdout in machine_types_to_hibernate) and (swap_size.stdout > mem_size.stdout)
 
+    - name: Install pm-utils
+      apt: pkg=pm-utils state=present
+      when: (model_number.stdout in machine_types_to_hibernate) and (swap_size.stdout > mem_size.stdout)
+
+    - name: Install uswsusp
+      apt: pkg=uswsusp state=present
+      when: (model_number.stdout in machine_types_to_hibernate) and (swap_size.stdout > mem_size.stdout)
+
     - name: Ensure hibernation file is not present on incompatible machines
       shell: /bin/bash -c "[ -f {{hibernation_policy_file_path}} ] && rm -f {{hibernation_policy_file_path}} || echo 'hibernation policy file not found'"
       when: (swap_size.stdout < mem_size.stdout)
+
+    - name: change systemd power settings to disable sleep on lid close
+      template: 
+        src: "./files/logind.conf"
+        dest: "/etc/systemd/logind.conf"
+        mode: "0744"
+
+    - name: get swap partition device path
+      shell: "swapon --show=NAME --noheadings"
+      register: swap_dev
+
+    - name: "Add swap parition to /etc/default/grub"
+      lineinfile: 
+        dest: "/etc/default/grub" 
+        regexp: '^GRUB_CMDLINE_LINUX_DEFAULT=' 
+        line: 'GRUB_CMDLINE_LINUX_DEFAULT="quiet splash resume={{swap_dev.stdout}}"' 
+        owner: root 
+        group: root 
+        mode: 0644
+      when: (model_number.stdout in machine_types_to_hibernate) and (swap_size.stdout > mem_size.stdout)
+
+    - name: update grub boot state
+      shell: "update-grub"
+      when: (model_number.stdout in machine_types_to_hibernate) and (swap_size.stdout > mem_size.stdout)
+
+    - name: "Add swap parition to /etc/initramfs-tools/conf.d/resume"
+      lineinfile: 
+        dest: "/etc/initramfs-tools/conf.d/resume" 
+        regexp: '^RESUME=' 
+        line: 'RESUME={{swap_dev.stdout}}' 
+        owner: root 
+        group: root 
+        mode: 0644
+      when: (model_number.stdout in machine_types_to_hibernate) and (swap_size.stdout > mem_size.stdout)
+
+    - name: update initramfs-tools img
+      shell: "update-initramfs -u -k all"
+      when: (model_number.stdout in machine_types_to_hibernate) and (swap_size.stdout > mem_size.stdout)
+
+    - name: "Change critical battery action to Hibernate"
+      lineinfile: 
+        dest: "/etc/UPower/UPower.conf" 
+        regexp: '^CriticalPowerAction=' 
+        line: 'CriticalPowerAction=Hibernate' 
+        owner: root 
+        group: root 
+        mode: 0644
+      when: (model_number.stdout in machine_types_to_hibernate) and (swap_size.stdout > mem_size.stdout)
+
 
     - name: get list of users
       shell: "cut -d: -f1 /etc/passwd"
@@ -62,6 +120,6 @@
       with_items:
         - "{{ user_list_cmd.stdout_lines }}"
         #- "root"
-        #- "lightdm"
+        #- "gdm"
         #- "{{ ansible_user }}"
         #- "{{ local_usernames_with_sudo_access + local_usernames_with_access + github_usernames_with_access + github_usernames_with_sudo_access }}"

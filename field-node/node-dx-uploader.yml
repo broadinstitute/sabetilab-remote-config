@@ -12,8 +12,8 @@
 
     monitored_users:
       - username: "{{ samba_username }}"
-        #applet: "{{ applet }}" # sourced from group_vars/ or host_vars/
-        workflow: "{{ workflow }}" # sourced from group_vars/ or host_vars/
+        applet: "{{ applet }}" # sourced from group_vars/ or host_vars/
+        #workflow: "{{ workflow }}" # sourced from group_vars/ or host_vars/
         monitored_directories:
           - "/srv/samba/home/{{ samba_username }}"
         script: "{{ post_upload_script }}" # script called after upload is complete, where call is: "<script specified>  <path/to/Run/directory>"
@@ -22,6 +22,8 @@
         min_size: 500 # size needed to upload, in MB
         min_interval: 900 # sync check period, in seconds
         n_streaming_threads: 3
+        downstream_input: |-
+          {{ downstream_input | to_json }}
     mode: deploy
 
     seqdata_archival_path: "/media/seqdata"
