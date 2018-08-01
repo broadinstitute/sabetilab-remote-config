@@ -35,6 +35,7 @@ do
     else
       tar -czf "/tmp/${base}.tar.gz" "$dir"
     fi
+    date
 
     gsutil cp "/tmp/${base}.tar.gz" "${bucket}${base}.tar.gz"
     rm "/tmp/${base}.tar.gz"
