@@ -19,6 +19,9 @@
     - name: Install htop
       apt: pkg=htop state=present
 
+    - name: Install pigz
+      apt: pkg=pigz state=present
+
     - name: Install openssh-server
       apt: pkg=openssh-server state=present
 
