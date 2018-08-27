@@ -47,7 +47,7 @@ Clone this repository from GitHub to your machine.
 
 Create a new `settings_manager.yml` in the root-level repo directory, based on `settings_manager.yml.template`. Also create a new `settings_field_node.yml` in this directory, based on `settings_field_node.yml.template`
 
-Create an AWS IAM user with EC2 and Route53 permissions, and save the credentials. Use the key and secret in configuring `settings_manager.yml`. Create a second set of AWS credentials with only Route53 permissions, and use the values in configuring `settings_field_node.yml`.
+Create an AWS IAM user with EC2 and Route53 permissions, and save the credentials. Use the key and secret in configuring `settings_manager.yml`. Create a second set of AWS credentials with only Route53 permissions ("`AmazonRoute53FullAccess`"), and use the values in configuring `settings_field_node.yml`.
 
 Create a Route53 A record for the subdomain to be used for the management node (vagrant-aws-route53 can update the record but not create it).  The name `manager`.example.com is suggested. This record can be created via the AWS web console.
 
