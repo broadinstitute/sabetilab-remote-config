@@ -11,6 +11,8 @@ if [[ "$UID" -ne "$ROOT_UID" ]] ; then
     exit 1
 fi
 
+add-apt-repository -y ppa:ansible/ansible
+apt-get update -y
 apt-get install -y ansible openssh-server
 
 SCRIPT_DIRECTORY=$(dirname $0)

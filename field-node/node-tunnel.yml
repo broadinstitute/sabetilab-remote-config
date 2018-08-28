@@ -24,7 +24,7 @@
       template: 
         src: "./files/update_route53.py.j2"
         dest: "/opt/field-node/update_route53.py"
-        mode: "0744"
+        mode: "0700"
 
     - name: setup cron job to update Route53 on reboot
       cron: 
