@@ -95,10 +95,10 @@ def update_dns(subdomain, domain, new_ip, new_port):
             try:
                 if sys.stdin.isatty():
                     print('Updating %s: %s -> %s' % (fqdn, old_ip, new_ip))
-                zone.update_rec_name(fqdn, new_ip, 900)
+                update_rec_name(fqdn, new_ip, 900)
             except DNSServerError:
                 # create the record
-                zone.add_rec_name(fqdn, new_ip, 900)
+                add_rec_name(fqdn, new_ip, 900)
 
         if old_port != new_port:
             try:
@@ -109,7 +109,7 @@ def update_dns(subdomain, domain, new_ip, new_port):
                 # create the record
                 zone.add_txt(fqdn, datestr, 900)
     else:
-            zone.add_rec_name(fqdn, new_ip, 900)
+            add_rec_name(fqdn, new_ip, 900)
             zone.add_txt(fqdn, datestr, 900)
 
 if __name__ == "__main__":
