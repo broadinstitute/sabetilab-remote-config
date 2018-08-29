@@ -13,8 +13,22 @@
     - geerlingguy.security # this will disconnect SSH, and must be run locally
 
   tasks:
+    # Add ansible repository
+    - name: "add ansible repository"
+      apt_repository:
+        repo: ppa:ansible/ansible
+
+    - name: "apt-get update"
+      apt: update_cache=yes
+
+    - name: "apt-get upgrade"
+      apt: upgrade=dist
+
     - name: Install build dependencies
       apt: pkg=build-essential state=present
+
+    - name: Install ansible
+      apt: pkg=ansible state=present
 
     - name: Install htop
       apt: pkg=htop state=present
@@ -45,9 +59,6 @@
 
     # - shell: "systemctl daemon-reload && systemctl enable enp12s0_watcher"
     #   when: enp12s0_service_file.changed
-
-    - name: Install ansible
-      apt: pkg=ansible state=present
 
     - name: Install tmux
       apt: pkg=tmux state=present
@@ -83,6 +94,7 @@
     - name: Install python dependencies
       pip: 
         requirements: "/opt/field-node/python-requirements.txt"
+        #extra_args: --ignore-installed
 
     # - name: Ensure .ssh directory exists.
     #   file: 
