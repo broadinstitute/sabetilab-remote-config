@@ -97,6 +97,14 @@ samba_default_global:
   printcap_name: '/dev/null'
   show_add_printer_wizard: 'no'
   disable_spoolss: 'yes'
+  # check Run > Secpol.msc (Local Security Policy Editor GUI)
+  #   Local Policies > Security Options > Network Security: LAN Manager authentication level 
+  # ntlm_auth=yes required on Win 7+ machines when "Network security: LAN Manager authentication level"
+  #   is set to "Send LM& NTLM - use NTLM v2 session security if negotiated"
+  # rather than the default of NTLMv2 only NOTE: this makes it less secure
+  # this is because of a negotiation conflict between Win and Linux Samba
+  # https://docs.microsoft.com/en-us/windows/security/threat-protection/security-policy-settings/network-security-lan-manager-authentication-level
+  ntlm_auth: 'yes' 
 
   dfree_command: '{{ dfree_script | default("/usr/local/bin/dfree.sh") }}'
 
