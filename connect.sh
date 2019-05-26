@@ -66,4 +66,3 @@ echo ""
 
 echo "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR -o ProxyCommand=\"ssh -W %h:%p $CONNECT_USERNAME@$MANAGER_IP\" $CONNECT_USERNAME@localhost -p $PORT_ON_RELAY"
 ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR -o ProxyCommand="ssh -W %h:%p $CONNECT_USERNAME@$MANAGER_IP" $CONNECT_USERNAME@localhost -p "$PORT_ON_RELAY"
-
