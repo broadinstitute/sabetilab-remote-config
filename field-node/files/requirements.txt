@@ -1,4 +1,3 @@
-Area53==0.94
 boto==2.48.0
 dnspython==1.12.0
 requests==2.20.0

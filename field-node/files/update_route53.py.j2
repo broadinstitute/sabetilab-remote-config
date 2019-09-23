@@ -12,7 +12,8 @@ from datetime import datetime
 os.environ["AWS_ACCESS_KEY_ID"] = "{{aws_access_key_id}}"
 os.environ["AWS_SECRET_ACCESS_KEY"] = "{{aws_secret_access_key}}"
 
-from area53 import route53
+import boto.route53
+from boto.route53.record import ResourceRecordSets
 from boto.route53.exception import DNSServerError
 import requests
 import ipaddress
@@ -56,9 +57,27 @@ def get_txt_rec(domain_name):
     resolver.nameservers=[ socket.gethostbyname('ns-491.awsdns-61.com') ]
     return str(resolver.query(domain_name, 'TXT')[0]).replace('"','')
 
-def get_port(domain_name):
+def get_a_rec(domain_name):
+    resolver = dns.resolver.Resolver()
+    resolver.nameservers=[ socket.gethostbyname('ns-491.awsdns-61.com') ]
+    return str(resolver.query(domain_name, 'A')[0]).replace('"','')
+
+def get_aaaa_rec(domain_name):
+    resolver = dns.resolver.Resolver()
+    resolver.nameservers=[ socket.gethostbyname('ns-491.awsdns-61.com') ]
+    return str(resolver.query(domain_name, 'AAAA')[0]).replace('"','')
+
+def get_port_from_public_txt(domain_name):
     txt_record = get_txt_rec(domain_name)
-    port_num_matches = re.findall(r'^P(\d+);.*', txt_record)
+    port_num_matches = re.findall(r'^"?P(\d+);.*', txt_record)
+    port_num = ""
+    if len(port_num_matches) > 0:
+        port_num = port_num_matches[0]
+
+    return port_num
+
+def parse_port(txt_str):
+    port_num_matches = re.findall(r'^"?P(\d+);.*', txt_str)
     port_num = ""
     if len(port_num_matches) > 0:
         port_num = port_num_matches[0]
@@ -66,24 +85,23 @@ def get_port(domain_name):
     return port_num
 
 def update_dns(subdomain, domain, new_ip, new_port):
-    fqdn = '%s.%s' % (subdomain, domain)
-    zone = route53.get_zone(domain)
-    a_record = zone.get_a(fqdn)
-    aaaa_record = zone.get_aaaa(fqdn)
+    fqdn = '%s.%s.' % (subdomain, domain)
+    conn = boto.route53.connect_to_region("eu-west-1")
+    zone = conn.get_zone(domain)
+    change_set = ResourceRecordSets(conn, zone.id)
 
     datestr = '"P%s; Last update %s."' % (new_port, datetime.utcnow().strftime('%Y-%m-%d %H:%M'))
 
     if type(ipaddress.ip_address(new_ip)) == ipaddress.IPv4Address:
-        update_rec_name = zone.update_a
-        add_rec_name    = zone.add_a
-        record          = a_record
+        record_ip_type = "A"
     elif type(ipaddress.ip_address(new_ip)) == ipaddress.IPv6Address:
-        update_rec_name = zone.update_aaaa
-        add_rec_name    = zone.add_aaaa
-        record          = aaaa_record
+        record_ip_type = "AAAA"
+
+    record = conn.get_all_rrsets(zone.id, type=record_ip_type, name=fqdn, maxitems=1)[0]
+    record_txt = conn.get_all_rrsets(zone.id, type="TXT", name=fqdn, maxitems=1)[0]
 
     if record:
-        old_port = get_port(fqdn)
+        old_port = parse_port(record_txt.resource_records[0]) #get_port_from_public_txt(fqdn)
         old_ip = record.resource_records[0]
 
         if old_ip == new_ip and old_port == new_port:
@@ -92,25 +110,23 @@ def update_dns(subdomain, domain, new_ip, new_port):
                 sys.exit(0)
 
         if old_ip != new_ip:
-            try:
-                if sys.stdin.isatty():
-                    print('Updating %s: %s -> %s' % (fqdn, old_ip, new_ip))
-                update_rec_name(fqdn, new_ip, 900)
-            except DNSServerError:
-                # create the record
-                add_rec_name(fqdn, new_ip, 900)
+            if sys.stdin.isatty():
+                print('Updating %s: %s -> %s' % (fqdn, old_ip, new_ip))
+            changes1 = change_set.add_change("UPSERT", fqdn, type=record_ip_type, ttl=900)
+            changes1.add_value(new_ip)
 
         if old_port != new_port:
-            try:
-                if sys.stdin.isatty():
-                    print('Updating port for %s: %s -> %s' % (fqdn, old_port, new_port))
-                zone.update_txt(fqdn, datestr, 900)
-            except DNSServerError:
-                # create the record
-                zone.add_txt(fqdn, datestr, 900)
+            if sys.stdin.isatty():
+                print('Updating port for %s: %s -> %s' % (fqdn, old_port, new_port))
+            changes1 = change_set.add_change("UPSERT", fqdn, type="TXT", ttl=600)
+            changes1.add_value(datestr)
     else:
-            add_rec_name(fqdn, new_ip, 900)
-            zone.add_txt(fqdn, datestr, 900)
+        changes1 = change_set.add_change("UPSERT", fqdn, type="TXT", ttl=600)
+        changes1.add_value(datestr)
+        changes1 = change_set.add_change("UPSERT", fqdn, type=record_ip_type, ttl=900)
+        changes1.add_value(new_ip)
+
+    change_set.commit()
 
 if __name__ == "__main__":
     try:
