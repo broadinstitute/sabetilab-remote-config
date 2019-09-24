@@ -3,7 +3,7 @@
 - name: Get DX tarball
   get_url:
     #url: https://wiki.dnanexus.com/images/files/dx-toolkit-current-ubuntu-16.04-amd64.tar.gz
-    url: https://wiki.dnanexus.com/images/files/dx-toolkit-v0.263.0-ubuntu-16.04-amd64.tar.gz
+    url: https://dnanexus-sdk.s3.amazonaws.com/dx-toolkit-v0.286.1-ubuntu-16.04-amd64.tar.gz
     dest: /opt/dx-toolkit-current-ubuntu-16.04-amd64.tar.gz
     mode: 0740
     timeout: 600
@@ -33,7 +33,7 @@
 
 - name: Get UA tarball
   get_url:
-    url: https://wiki.dnanexus.com/images/files/dnanexus-upload-agent-current-linux.tar.gz
+    url: https://dnanexus-sdk.s3.amazonaws.com/dnanexus-upload-agent-1.5.31-linux.tar.gz
     dest: /opt/dnanexus-upload-agent-current-linux.tar.gz
     mode: 0740
     timeout: 600
