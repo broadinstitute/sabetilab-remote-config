@@ -1,8 +1,15 @@
 ---
 
 - name: Install Samba packages
-  apt: pkg={{ item }} state=latest install_recommends=no
-  with_items: [ 'samba', 'samba-common', 'samba-common-bin' ]
+  apt:
+    state: latest
+    install_recommends: no
+    name: "{{ packages }}"
+  vars:
+    packages:
+      - 'samba'
+      - 'samba-common'
+      - 'samba-common-bin'
 
 - name: Create root Samba directories
   file: path={{ item }} state=directory owner=root group=root mode=0751
