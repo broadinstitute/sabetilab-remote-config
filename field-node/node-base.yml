@@ -8,6 +8,8 @@
 
   vars:
     security_ssh_port: "{{ ssh_port }}"
+    system76_machines_to_install_drivers:
+      - "Gazelle" # System76 model of laptop
 
   roles:
     - geerlingguy.security # this will disconnect SSH, and must be run locally
@@ -95,6 +97,22 @@
       pip: 
         requirements: "/opt/field-node/python-requirements.txt"
         #extra_args: --ignore-installed
+
+    - name: get machine model number
+      shell: "dmidecode -s system-product-name"
+      register: model_number
+
+    - debug: 
+        msg: "Machine identified as {{model_number.stdout}}"
+
+    - name: install System76 package source if they make this computer model
+      apt_repository:
+        repo: ppa:system76-dev/stable
+      when: (model_number.stdout in system76_machines_to_install_drivers)
+
+    - name: install System76 driver if they make this computer model
+      apt: pkg=system76-driver state=present
+      when: (model_number.stdout in system76_machines_to_install_drivers)
 
     # - name: Ensure .ssh directory exists.
     #   file: 

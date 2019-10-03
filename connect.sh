@@ -12,19 +12,37 @@ SCRIPT_DIRECTORY=$(dirname $0)
 NODE_DOMAIN=$1
 #RELAY_SUBDOMAIN=""
 
-RELAY_SUBDOMAIN=$(cat $SCRIPT_DIRECTORY/settings_field_node.yml | grep "manager_domain_name" | perl -lape 's/(.*):\s*(\S*)/$2/g')
-RELAY_DOMAIN=$(cat $SCRIPT_DIRECTORY/settings_field_node.yml | grep "^domain_name" | perl -lape 's/(.*):\s*(\S*)/$2/g')
+
+if [[ -f "$SCRIPT_DIRECTORY/settings_field_node.yml" ]]; then
+    RELAY_SUBDOMAIN=$(cat $SCRIPT_DIRECTORY/settings_field_node.yml | grep "manager_domain_name" | perl -lape 's/(.*):\s*(\S*)/$2/g')
+    RELAY_DOMAIN=$(cat $SCRIPT_DIRECTORY/settings_field_node.yml | grep "^domain_name" | perl -lape 's/(.*):\s*(\S*)/$2/g')
+
+    # append the relay domain if only the node name is given
+    if [[ ! -z "$RELAY_DOMAIN" ]] && [[ -z "$(echo $1 | grep ${RELAY_DOMAIN})" ]]; then
+        echo "foo"
+        NODE_DOMAIN="$NODE_DOMAIN.$RELAY_DOMAIN"
+    fi
+else
+    MATCHED_BASE_DOMAIN="$(echo $1 | rev | perl -lape 's/^(\w+\.[^\.\/]+)\.(.*)/$1/g' | rev)"
+    MATCHED_SUB_DOMAIN="$(echo $1 | rev | perl -lape 's/^(\w+\.[^\.\/]+)\.(.*)/$2/g' | rev)"
+
+    if [[ "$MATCHED_BASE_DOMAIN" == "$MATCHED_SUB_DOMAIN" ]]; then
+        echo "Looks like only the node name, '$MATCHED_SUB_DOMAIN', was given, but the base domain is unknown."
+        echo "The base domain should be included, or 'manager_domain_name' should be present in: $SCRIPT_DIRECTORY/settings_field_node.yml"
+        exit 1
+    else
+        # infer relay domain from base domain if yml file is not present 
+        # This assumes it is on the same IP as the base domain, which is not necessarily the case.
+        RELAY_SUBDOMAIN="${MATCHED_BASE_DOMAIN}"
+        NODE_DOMAIN="${MATCHED_SUB_DOMAIN}.${MATCHED_BASE_DOMAIN}"
+    fi
+fi
 
 CONNECT_USERNAME=""
 if [[ ! -z "$2" && "$2" != " " ]]; then
     CONNECT_USERNAME=$2
 else
     CONNECT_USERNAME="$(whoami)"
-fi
-
-# append the relay domain if only the node name is given
-if [[ -z "$(echo $1 | grep $RELAY_DOMAIN)" ]]; then
-    NODE_DOMAIN="$NODE_DOMAIN.$RELAY_DOMAIN"
 fi
 
 # get the IP of the manager node
@@ -48,4 +66,3 @@ echo ""
 
 echo "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR -o ProxyCommand=\"ssh -W %h:%p $CONNECT_USERNAME@$MANAGER_IP\" $CONNECT_USERNAME@localhost -p $PORT_ON_RELAY"
 ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR -o ProxyCommand="ssh -W %h:%p $CONNECT_USERNAME@$MANAGER_IP" $CONNECT_USERNAME@localhost -p "$PORT_ON_RELAY"
-
