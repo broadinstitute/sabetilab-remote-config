@@ -37,7 +37,7 @@ do
     fi
     date
 
-    gsutil cp "/tmp/${base}.tar.gz" "${bucket}${base}.tar.gz"
+    gsutil cp -s nearline "/tmp/${base}.tar.gz" "${bucket}${base}.tar.gz"
     rm "/tmp/${base}.tar.gz"
     #echo "$base"
     #echo "$dir"
