@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 import re, sys
 import os
@@ -11,7 +11,7 @@ import yaml
 class AnsibleInventory(object):
     def __init__(self, local=False):
         with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "settings_manager.yml"), "r") as settings_file:
-           self.settings_object = yaml.load(settings_file)
+           self.settings_object = yaml.load(settings_file, Loader=yaml.FullLoader)
 
         self.domain  = self.settings_object["domain_name"]
         self.manager_domain = "manager." + self.domain

@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 from __future__ import unicode_literals
 
 # based on: https://gist.github.com/vrypan/4341878
@@ -50,22 +50,22 @@ def get_public_ip():
     # dig TXT +short o-o.myaddr.l.google.com @ns1.google.com | awk -F'"' '{ print $2}'
     resolver = dns.resolver.Resolver()
     resolver.nameservers=[ socket.gethostbyname('ns1.google.com') ]
-    return str(resolver.query('o-o.myaddr.l.google.com', 'TXT')[0]).replace('"','')
+    return str(resolver.resolve('o-o.myaddr.l.google.com', 'TXT')[0]).replace('"','')
 
 def get_txt_rec(domain_name):
     resolver = dns.resolver.Resolver()
     resolver.nameservers=[ socket.gethostbyname('ns-491.awsdns-61.com') ]
-    return str(resolver.query(domain_name, 'TXT')[0]).replace('"','')
+    return str(resolver.resolve(domain_name, 'TXT')[0]).replace('"','')
 
 def get_a_rec(domain_name):
     resolver = dns.resolver.Resolver()
     resolver.nameservers=[ socket.gethostbyname('ns-491.awsdns-61.com') ]
-    return str(resolver.query(domain_name, 'A')[0]).replace('"','')
+    return str(resolver.resolve(domain_name, 'A')[0]).replace('"','')
 
 def get_aaaa_rec(domain_name):
     resolver = dns.resolver.Resolver()
     resolver.nameservers=[ socket.gethostbyname('ns-491.awsdns-61.com') ]
-    return str(resolver.query(domain_name, 'AAAA')[0]).replace('"','')
+    return str(resolver.resolve(domain_name, 'AAAA')[0]).replace('"','')
 
 def get_port_from_public_txt(domain_name):
     txt_record = get_txt_rec(domain_name)
@@ -150,7 +150,7 @@ if __name__ == "__main__":
                     new_port = new_port_matches[0]
                 if len(new_port):
                     #Write the port to a file
-                    with open(remote_port_file, "wb") as pfile:
+                    with open(remote_port_file, "w") as pfile:
                         pfile.write(new_port+"\n")
 
                     # spawn a subprocess to update the DNS record

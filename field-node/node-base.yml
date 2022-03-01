@@ -65,11 +65,37 @@
     - name: Install tmux
       apt: pkg=tmux state=present
 
+    - name: Install apt-transport-https
+      apt: pkg=apt-transport-https state=present
+
+    - name: Install ca-certificates
+      apt: pkg=ca-certificates state=present
+
+    - name: Install gnupg
+      apt: pkg=gnupg state=present
+
+    - name: Install curl
+      apt: pkg=curl state=present
+
+    - name: Add google-cloud-sdk repository
+      shell: |
+       grep "cloud.google.gpg" || echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
+       curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
+
+    - name: "apt-get update"
+      apt: update_cache=yes
+
+    - name: Install google-cloud-sdk
+      apt: pkg=google-cloud-sdk state=present
+
     - name: Install net-tools
       apt: pkg=net-tools state=present
 
+    - name: Install python-is-python3
+      apt: pkg=python-is-python3 state=present
+
     - name: Install python-dev
-      apt: pkg=python-dev state=present
+      apt: pkg=python3-dev state=present
 
     - name: Install speedtest-cli
       apt: pkg=speedtest-cli state=present
@@ -81,7 +107,7 @@
         mode: "0755"
       register: pip_script_downloaded
     - name: install pip
-      command: "python /opt/get-pip.py"
+      command: "python3 /opt/get-pip.py"
       when: pip_script_downloaded is success
 
     - name: Create file copy destination on remote

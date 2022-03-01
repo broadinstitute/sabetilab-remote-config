@@ -1,6 +1,6 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
-from __future__ import print_function
+
 import sys
 import os
 import subprocess as sub
@@ -89,6 +89,13 @@ def parse_args():
             "DNAnexus applet or workflow run after successful upload. Note that " +
             "the input upload_sentinel_record for applet or 0.upload_sentinel_record " +
             "will be overwritten programmatically, even if provided by user.")
+    parser.add_argument("-S", "--samplesheet-delay", action="store_true",
+            help="Delay samplesheet upload until run data is uploaded.")
+    parser.add_argument("-x", "--exclude-patterns", metavar='<regex>', nargs='*',
+            help="An optional list of regex patterns to exclude.")
+    parser.add_argument("-n", "--novaseq", dest="novaseq", action='store_true',
+            help="If Novaseq is used, this parameter has to be used.")
+
 
     # Mutually exclusive inputs for verbose loggin (UA) vs dxpy upload
     upload_debug_group = parser.add_mutually_exclusive_group(required=False)
@@ -179,7 +186,7 @@ def check_input(args):
     try:
         # We assume that dx_sync_directory is located in the same folder as this script
         # This is resolved by absolute path of invocation
-        sub.check_call(['python', '{curr_dir}/dx_sync_directory.py'.format(curr_dir=sys.path[0]), '-h'],
+        sub.check_call(['python3', '{curr_dir}/dx_sync_directory.py'.format(curr_dir=sys.path[0]), '-h'],
                 stdout=open(os.devnull, 'w'), close_fds=True)
     except sub.CalledProcessError:
         raise_error("dx_sync_directory.py not found. Please run incremental " +
@@ -211,7 +218,8 @@ def run_command_with_retry(my_num_retries, my_command):
         print_stderr("Running (Try %d of %d): %s" %
                 (trys, my_num_retries, my_command))
         try:
-            output = (sub.check_output(my_command)).strip()
+            process = sub.run(my_command, check=True, stdout=sub.PIPE, universal_newlines=True)
+            output = process.stdout.strip()
             return output
         except sub.CalledProcessError as e:
             print_stderr("Failed to run `%s`, retrying (Try %s)" %
@@ -259,11 +267,18 @@ def run_sync_dir(lane, args, finish=False):
         include_patterns = CONFIG_FILES
         include_patterns.append("s_" + lane_num + "_")
     # If upload_thumbnails is specified, upload thumbnails
-    exclude_patterns = []
+    if not args.exclude_patterns:
+        args.exclude_patterns = []
+
+    exclude_patterns = args.exclude_patterns
+
     if not args.upload_thumbnails:
         exclude_patterns.append("Images")
 
-    invocation = ["python", "{curr_dir}/dx_sync_directory.py".format(curr_dir=sys.path[0])]
+    if args.samplesheet_delay:
+        exclude_patterns.append("SampleSheet.csv")
+
+    invocation = ["python3", "{curr_dir}/dx_sync_directory.py".format(curr_dir=sys.path[0])]
     invocation.extend(["--log-file", lane["log_path"]])
     invocation.extend(["--tar-destination", args.project + ":" + lane["remote_folder"]])
     invocation.extend(["--tar-directory", args.temp_dir])
@@ -275,6 +290,7 @@ def run_sync_dir(lane, args, finish=False):
     invocation.extend(["--max-tar-size", str(args.max_size)])
     invocation.extend(["--upload-threads", str(args.upload_threads)])
     invocation.extend(["--prefix", lane["prefix"]])
+    invocation.extend(["--auth-token", args.api_token])
     if args.verbose:
         invocation.append("--verbose")
     if args.dxpy_upload:
@@ -287,6 +303,12 @@ def run_sync_dir(lane, args, finish=False):
 
     output = run_command_with_retry(args.retries, invocation)
     return output.split()
+
+def termination_file_exists(run_dir, novaseq):
+    if not novaseq:
+        return os.path.isfile(os.path.join(run_dir, "RTAComplete.txt")) or os.path.isfile(os.path.join(run_dir, "RTAComplete.xml"))
+    else:
+        return os.path.isfile(os.path.join(run_dir, "CopyComplete.txt"))
 
 def main():
 
@@ -352,14 +374,23 @@ def main():
                     folder=lane["remote_folder"], parents=True,
                     name=lane["record_name"], properties=properties)
 
-        # upload SampleSheet and RunInfo here, before uploading any data.
-
+        # upload RunInfo here, before uploading any data, unless it is already uploaded.
         record = lane["dxrecord"]
         properties = record.get_properties()
-        lane["runinfo_file_id"]     = upload_single_file(args.run_dir + "/RunInfo.xml", args.project,
-                                         lane["remote_folder"], properties)
-        lane["samplesheet_file_id"] = upload_single_file(args.run_dir + "/SampleSheet.csv", args.project,
-                                         lane["remote_folder"], properties)
+
+        runInfo = dxpy.find_one_data_object(zero_ok=True, name="RunInfo.xml", project=args.project, folder=lane["remote_folder"])
+        if not runInfo:
+            lane["runinfo_file_id"] = upload_single_file(args.run_dir + "/RunInfo.xml", args.project, lane["remote_folder"], properties)
+        else:
+            lane["runinfo_file_id"] = runInfo["id"]
+
+        # Upload samplesheet unless samplesheet-delay is specified or it is already uploaded.
+        if not args.samplesheet_delay:
+            sampleSheet = dxpy.find_one_data_object(zero_ok=True, name="SampleSheet.csv", project=args.project, folder=lane["remote_folder"])
+            if not sampleSheet:
+                lane["samplesheet_file_id"] = upload_single_file(args.run_dir + "/SampleSheet.csv", args.project, lane["remote_folder"], properties)
+            else:
+                lane["samplesheet_file_id"] = sampleSheet["id"]
 
     if done_count == len(lane_info):
         print_stderr("EXITING: All lanes already uploaded")
@@ -370,10 +401,8 @@ def main():
 
     initial_start_time = time.time()
     # While loop waiting for RTAComplete.txt or RTAComplete.xml
-    while (not os.path.isfile(os.path.join(args.run_dir, "RTAComplete.txt"))
-        and not os.path.isfile(os.path.join(args.run_dir, "RTAComplete.xml"))):
+    while not termination_file_exists(args.run_dir, args.novaseq):
         start_time=time.time()
-
         run_time = start_time - initial_start_time
         # Fail if run time exceeds total time to wait
         if run_time > seconds_to_wait:
@@ -414,6 +443,11 @@ def main():
             'tar_file_ids': file_ids
             }
 
+        # Upload sample sheet here, if samplesheet-delay specified
+        if args.samplesheet_delay:
+            lane["samplesheet_file_id"] = upload_single_file(args.run_dir + "/SampleSheet.csv", args.project,
+                                            lane["remote_folder"], properties)
+
         # ID to singly uploaded file (when uploaded successfully)
         if lane.get("log_file_id"):
             details.update({'log_file_id': lane["log_file_id"]})
@@ -438,10 +472,9 @@ def main():
         if not isinstance(input_dict, dict):
             raise_error("Expected a dict for downstream input. Got %s." %input_dict)
 
-        for k, v in input_dict.items():
-            if not ((isinstance(k, str) or isinstance(k, basestring)) and
-                    (isinstance(v, str) or isinstance(v, basestring) or isinstance(v, dict))):
-                raise_error("Expected (string) key and (string or dict) value pairs for downstream input. Got %s %s" %(k, v))
+        for k, v in list(input_dict.items()):
+            if not (isinstance(k, str) and (isinstance(v, str) or isinstance(v, dict))):
+                    raise_error("Expected (string) key and (string or dict) value pairs for downstream input. Got (%s)%s (%s)%s" %(type(k), k, type(v), v))
 
             downstream_input[k] = v
 
@@ -525,7 +558,7 @@ def main():
         # script has been validated to be executable earlier, assume no change
         try:
             sub.check_call([args.script, args.run_dir])
-        except sub.CalledProcessError, e:
+        except sub.CalledProcessError as e:
             raise_error("Executable (%s) failed with error %d: %s" %(args.script, e.returncode, e.output))
 
 

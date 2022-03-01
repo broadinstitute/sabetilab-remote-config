@@ -3,18 +3,18 @@
 - name: Get DX tarball
   get_url:
     #url: https://wiki.dnanexus.com/images/files/dx-toolkit-current-ubuntu-16.04-amd64.tar.gz
-    url: https://dnanexus-sdk.s3.amazonaws.com/dx-toolkit-v0.286.1-ubuntu-16.04-amd64.tar.gz
-    dest: /opt/dx-toolkit-current-ubuntu-16.04-amd64.tar.gz
+    url: https://dnanexus-sdk.s3.amazonaws.com/dx-toolkit-v0.320.0-ubuntu-20.04-amd64.tar.gz
+    dest: /opt/dx-toolkit-current-ubuntu-20.04-amd64.tar.gz
     mode: 0740
     timeout: 600
 
 - name: unpack DX tarball
-  unarchive: src=/opt/dx-toolkit-current-ubuntu-16.04-amd64.tar.gz dest=/opt/ remote_src=yes
+  unarchive: src=/opt/dx-toolkit-current-ubuntu-20.04-amd64.tar.gz dest=/opt/ remote_src=yes
 
 - name: Remove DX tarball
   file:
     state: absent
-    path: /opt/dx-toolkit-current-ubuntu-16.04-amd64.tar.gz
+    path: /opt/dx-toolkit-current-ubuntu-20.04-amd64.tar.gz
 
 # http://stackoverflow.com/questions/22256884/not-possible-to-source-bashrc-with-ansible
 - name: check dx version
@@ -33,7 +33,7 @@
 
 - name: Get UA tarball
   get_url:
-    url: https://dnanexus-sdk.s3.amazonaws.com/dnanexus-upload-agent-1.5.31-linux.tar.gz
+    url: https://dnanexus-sdk.s3.amazonaws.com/dnanexus-upload-agent-1.5.33-linux.tar.gz
     dest: /opt/dnanexus-upload-agent-current-linux.tar.gz
     mode: 0740
     timeout: 600
@@ -198,7 +198,7 @@
   cron: >
     name="DNAnexus monitor runs (debug)"
     user="{{ item.0.username }}"
-    job="flock -w 5 /var/lock/dnanexus_uploader.lock bash -ex -c 'source /opt/dx-toolkit/environment; PATH=/opt/dnanexus-upload-agent:$PATH; python /opt/dnanexus/scripts/monitor_runs.py -c ~/dnanexus/config/monitor_runs.config -p {{ upload_project }} -d {{ item.1 }} {{ \'-A\' if \'applet\' in item.0 else \'\' }} {{ item.0.applet if \'applet\' in item.0 else \'\'}} {{ \'-w\' if \'workflow\' in item.0 else \'\' }} {{ item.0.workflow if \'workflow\' in item.0 else \'\'}} {{ \'-s\' if \'script\' in item.0 else \'\' }} {{ item.0.script if \'script\' in item.0 else \'\'}} -v > ~/monitor.log 2>&1' > ~/dx-stream_cron.log 2>&1"
+    job="flock -w 5 /var/lock/dnanexus_uploader.lock bash -ex -c 'source /opt/dx-toolkit/environment; PATH=/opt/dnanexus-upload-agent:$PATH; python3 /opt/dnanexus/scripts/monitor_runs.py -c ~/dnanexus/config/monitor_runs.config -p {{ upload_project }} -d {{ item.1 }} {{ \'-A\' if \'applet\' in item.0 else \'\' }} {{ item.0.applet if \'applet\' in item.0 else \'\'}} {{ \'-w\' if \'workflow\' in item.0 else \'\' }} {{ item.0.workflow if \'workflow\' in item.0 else \'\'}} {{ \'-s\' if \'script\' in item.0 else \'\' }} {{ item.0.script if \'script\' in item.0 else \'\'}} -v > ~/monitor.log 2>&1' > ~/dx-stream_cron.log 2>&1"
   with_subelements:
         - "{{ monitored_users }}"
         - monitored_directories
@@ -212,7 +212,7 @@
     name="DNAnexus monitor runs (deploy)"
     special_time=hourly
     user="{{ item.0.username }}"
-    job="flock -w 5 /var/lock/dnanexus_uploader.lock bash -ex -c 'source /opt/dx-toolkit/environment; PATH=/opt/dnanexus-upload-agent:$PATH; python /opt/dnanexus/scripts/monitor_runs.py -c ~/dnanexus/config/monitor_runs.config -p {{ upload_project }} -d {{ item.1 }} {{ \'-A\' if \'applet\' in item.0 else \'\' }} {{ item.0.applet if \'applet\' in item.0 else \'\'}} {{ \'-w\' if \'workflow\' in item.0 else \'\' }} {{ item.0.workflow if \'workflow\' in item.0 else \'\'}} {{ \'-s\' if \'script\' in item.0 else \'\' }} {{ item.0.script if \'script\' in item.0 else \'\'}} -v > ~/monitor.log 2>&1' > ~/dx-stream_cron.log 2>&1"
+    job="flock -w 5 /var/lock/dnanexus_uploader.lock bash -ex -c 'source /opt/dx-toolkit/environment; PATH=/opt/dnanexus-upload-agent:$PATH; python3 /opt/dnanexus/scripts/monitor_runs.py -c ~/dnanexus/config/monitor_runs.config -p {{ upload_project }} -d {{ item.1 }} {{ \'-A\' if \'applet\' in item.0 else \'\' }} {{ item.0.applet if \'applet\' in item.0 else \'\'}} {{ \'-w\' if \'workflow\' in item.0 else \'\' }} {{ item.0.workflow if \'workflow\' in item.0 else \'\'}} {{ \'-s\' if \'script\' in item.0 else \'\' }} {{ item.0.script if \'script\' in item.0 else \'\'}} -v > ~/monitor.log 2>&1' > ~/dx-stream_cron.log 2>&1"
   with_subelements:
         - "{{ monitored_users }}"
         - monitored_directories
