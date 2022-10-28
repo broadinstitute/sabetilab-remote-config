@@ -1,0 +1,12 @@
+[Unit]
+Description=Publish %I as alias for %H.local via mdns
+After=network.target avahi-daemon.service
+
+[Service]
+Type=simple
+ExecStart=/bin/bash -c "local=$(avahi-resolve -4 -n $(hostname).local | cut -f 2); if [ $local != '127.0.0.1' ]; then echo 'Aliasing '$local' as %I.local' && avahi-publish -a -R %I.local ${local}; else echo 'Exiting, local address is '${local} exit 1; fi"
+
+[Install]
+WantedBy=multi-user.target
+
+# based on https://serverfault.com/a/986437

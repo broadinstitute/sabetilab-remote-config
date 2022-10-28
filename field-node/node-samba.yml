@@ -3,7 +3,7 @@
     - "../settings_field_node.yml"
   vars:
     samba_shares: []
-    samba_service_names: ['smbd','nmbd']
+    samba_service_names: ['smbd','nmbd','wsdd2']
 
     # used to fake available storage on the samba share
     # since the MiSeq wants 100GB even though it needs much less (~5GB/run)
@@ -11,6 +11,16 @@
 
     seqdata_archival_path: "/media/seqdata"
     move_data_older_than_days: "5"
+
+    # NetBIOS has a hard limit of 15 characters for hostnames
+    # For the purposes of avahi-daemon/mDNS, Windows allows long hostnames, but
+    # will truncate them to 15 characters if NetBIOS is involved for a given machine
+    samba_netbios_name: "{{ ansible_hostname[:15] }}"
+
+    disable_netbios: "yes"
+
+    #samba_mdns_hostname: "{{ ansible_hostname }}" # only available in smbd >4.7
+    #WSDD_PARAMS: "--hostname {{ samba_netbios_name }}" # for wsdd, not wsdd2
 
   vars_prompt:
     - name: "samba_username"
@@ -34,6 +44,110 @@
     - name: set samba user password
       shell: "(echo {{ samba_user_password }}; echo {{ samba_user_password }}) | smbpasswd -s -a {{ samba_username }}"
 
+    # The Web Service Discovery protocol is used to advertise samba shares to Windows clients
+    # (especially Win10). Samba does not currently support WSD itself, so we need a WSD daemon, WSDD,
+    # to do so. 
+    # wsdd is present in default Ubuntu repos as of 22.04, but as of 2022-08-19
+    # it has not been backported to older versions of Ubuntu, so it must be installed from an external repo
+    # See installation instructions:
+    #   https://github.com/christgau/wsdd
+    # - name: add external wsdd repo and associated key (Ubuntu <22.04 only)
+    #   shell: |
+    #    echo "deb https://pkg.ltec.ch/public/ $(lsb_release -cs) main" > /etc/apt/sources.list.d/wsdd.list
+    #    apt-key adv --fetch-keys https://pkg.ltec.ch/public/conf/ltec-ag.gpg.key
+    #   when: (ansible_distribution_version is version('22.04', '<'))
+
+
+
+    # - name: install wsdd for Win10 disovery of network shares
+    #   ansible.builtin.apt: 
+    #     pkg: wsdd
+    #     state: present
+    #     update_cache: yes
+
+    # - name: override hostname broadcast by WSDD to netbios name (in case the system hostname is too long)
+    #   template: 
+    #     src: "./files/wsdd.conf.j2"
+    #     dest: "/etc/wsdd.conf"
+    #     mode: "0644"
+
+    # - name: start wsdd service
+    #   ansible.builtin.systemd:
+    #     state: started
+    #     name: wsdd
+
+    # - name: enable wsdd service and ensure it is not masked
+    #   ansible.builtin.systemd:
+    #     name: wsdd
+    #     enabled: yes
+    #     masked: no
+
+    - name: Create tmp directory to build wsdd2
+      ansible.builtin.file:
+        path: /tmp/wsdd2/
+        state: directory
+        mode: '0755'
+
+    - name : Download wsdd2 source
+      become: yes
+      unarchive:
+        src: "https://github.com/Netgear/wsdd2/archive/refs/tags/1.8.7.tar.gz"
+        dest: "/tmp/wsdd2/"
+        mode: 0755
+        remote_src: yes
+
+    - debug:
+        msg: "setting samba_netbios_name: {{ samba_netbios_name }}"
+
+    - name: Build wsdd2
+      make:
+        chdir: /tmp/wsdd2/wsdd2-1.8.7
+
+    - name: Run 'install' target as root
+      make:
+        chdir: /tmp/wsdd2/wsdd2-1.8.7
+        target: install
+      become: yes
+
+    - name: remove wsdd2 build directory
+      ansible.builtin.file:
+        path: /tmp/wsdd2/
+        state: absent
+
+    - name: create symlink for wsdd2 systemd service definition file from package-installed location to ubuntu user default
+      ansible.builtin.file:
+        src: /usr/lib/systemd/system/wsdd2.service
+        dest: /etc/systemd/system/wsdd2.service
+        owner: root
+        group: root
+        state: link
+      become: yes
+
+    - name: enable wsdd2 service and ensure it is not masked
+      ansible.builtin.systemd:
+        name: wsdd2
+        enabled: yes
+        masked: no
+
+    - name: start wsdd2 service
+      ansible.builtin.systemd:
+        name: wsdd2
+        state: started
+
+    - name: create service to have avahi-daemon broadcast an mDNS alias
+      template: 
+        src: "./files/avahi-alias@.service"
+        dest: "/etc/systemd/system/avahi-alias@.service"
+        mode: "0644"
+
+    # see:
+    #   https://serverfault.com/a/986437
+    - name: start service to have avahi-daemon broadcast an mDNS alias
+      ansible.builtin.systemd:
+        name: "avahi-alias@{{ samba_netbios_name }}.local.service"
+        enabled: yes
+        masked: no
+
     - name: restart samba services
       service: 
         name: "{{ item }}" 
@@ -54,9 +168,9 @@
 
     - name: Copy in samba share readme
       template: 
-        src: "./files/PUT_MISEQ_OUTPUT_HERE.txt" 
-        dest: "{{ samba_homes_path }}/{{samba_username}}/PUT_MISEQ_OUTPUT_HERE.txt"
-        mode: "0755"
+        src: "./files/PUT_SEQUENCER_OUTPUT_HERE.txt.j2" 
+        dest: "{{ samba_homes_path }}/{{samba_username}}/PUT_SEQUENCER_OUTPUT_HERE.txt"
+        mode: "0444"
 
     - name: get list of users
       shell: "cut -d: -f1 /etc/passwd"
