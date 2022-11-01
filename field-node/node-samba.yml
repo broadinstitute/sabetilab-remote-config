@@ -15,8 +15,8 @@
     # NetBIOS has a hard limit of 15 characters for hostnames
     # For the purposes of avahi-daemon/mDNS, Windows allows long hostnames, but
     # will truncate them to 15 characters if NetBIOS is involved for a given machine
-    samba_netbios_name: "{{ ansible_hostname[:15] }}"
-
+    #samba_netbios_name: "{{ ansible_hostname[:15] }}"
+    # NETBIOS must be disabled if samba_netbios_name has length >15 characters
     disable_netbios: "yes"
 
     #samba_mdns_hostname: "{{ ansible_hostname }}" # only available in smbd >4.7
