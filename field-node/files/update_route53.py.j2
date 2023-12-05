@@ -150,7 +150,7 @@ if __name__ == "__main__":
                     new_port = new_port_matches[0]
                 if len(new_port):
                     #Write the port to a file
-                    with open(remote_port_file, "wb") as pfile:
+                    with open(remote_port_file, "w") as pfile:
                         pfile.write(new_port+"\n")
 
                     # spawn a subprocess to update the DNS record
