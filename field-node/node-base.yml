@@ -74,9 +74,15 @@
     - name: Install speedtest-cli
       apt: pkg=speedtest-cli state=present
 
+    - name: Install avahi-daemon
+      apt: pkg=avahi-daemon state=present
+
+    - name: Install avahi-utils
+      apt: pkg=avahi-utils state=present
+
     - name: download pip installer script
       get_url: 
-        url: https://bootstrap.pypa.io/get-pip.py
+        url: https://bootstrap.pypa.io/pip/3.6/get-pip.py # for newer py3 systems: https://bootstrap.pypa.io/get-pip.py
         dest: "/opt/get-pip.py"
         mode: "0755"
       register: pip_script_downloaded
