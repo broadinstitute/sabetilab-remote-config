@@ -18,11 +18,13 @@ env:
 jobs:
   check_playbook_syntax:
     runs-on: ubuntu-22.04
+    env:
+      GITHUB_ACTIONS_PYTHON_VERSION: 3.8
     steps:
       - name: update apt repo info
         run: sudo apt-get update -qq
       - name: install apt packages
-        run: sudo apt-get install -y python-apt python-pycurl
+        run: sudo apt-get install -y python3-apt python3-pycurl
       - name: install pip packages
         run: |
           pip install --upgrade pip
