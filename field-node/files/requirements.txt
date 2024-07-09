@@ -1,6 +1,6 @@
-boto
-dnspython
-requests
+boto==2.48.0
+dnspython==1.12.0
+requests==2.20.0
 urllib3
 psutil
 ipaddress
