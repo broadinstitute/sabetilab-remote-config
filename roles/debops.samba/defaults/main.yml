@@ -44,11 +44,12 @@ samba_default_global:
   # Logs / Accounting
   log_file: '/var/log/samba/log.%m'
   max_log_size: '1000'
-  syslog: '0'
+  #syslog: '0' # deprecated
+  logging: "syslog@0"
 
   # Authentication
   security: 'user'
-  encrypt_passwords: 'yes'
+  #encrypt_passwords: 'yes' # deprecated: https://www.samba.org/samba/docs/current/man-html/smb.conf.5.html#ENCRYPTPASSWORDS
   passdb_backend: 'tdbsam'
   unix_password_sync: 'no'
   obey_pam_restrictions: 'yes'
@@ -82,7 +83,7 @@ samba_default_global:
   min_receivefile_size: "2048"
   aio_read_size: "2048"
   aio_write_size: "2048"
-  write_cache_size: "1024000"
+  #write_cache_size: "1024000" # seemingly deprecated
   read_raw: "yes"
   write_raw: "yes"
   getwd_cache: "yes"
@@ -100,11 +101,31 @@ samba_default_global:
   # check Run > Secpol.msc (Local Security Policy Editor GUI)
   #   Local Policies > Security Options > Network Security: LAN Manager authentication level 
   # ntlm_auth=yes required on Win 7+ machines when "Network security: LAN Manager authentication level"
-  #   is set to "Send LM& NTLM - use NTLM v2 session security if negotiated"
+  #   is set to "Send LM & NTLM - use NTLM v2 session security if negotiated"
   # rather than the default of NTLMv2 only NOTE: this makes it less secure
   # this is because of a negotiation conflict between Win and Linux Samba
-  # https://docs.microsoft.com/en-us/windows/security/threat-protection/security-policy-settings/network-security-lan-manager-authentication-level
-  ntlm_auth: 'yes' 
+  #   https://docs.microsoft.com/en-us/windows/security/threat-protection/security-policy-settings/network-security-lan-manager-authentication-level
+  # See the samba docs for more info:
+  #   https://www.samba.org/samba/docs/current/man-html/smb.conf.5.html#NTLMAUTH
+  ntlm_auth: 'yes'
+  
+  # SMB2 supported by Windows Vista and later
+  # see: 
+  #   https://www.samba.org/samba/docs/current/man-html/smb.conf.5.html#SERVERMAXPROTOCOL
+  server_min_protocol: "SMB2"
+  server_max_protocol: "SMB3_11"
+
+  # for mDNS (Bonjour) advertisement of shares to macOS 
+  # and, optimistically, future versions of windows
+  # by avahi-daemon and other mDNS services
+  # This is set to "yes" by default in samba, but we'll set it explicitly.
+  # See:
+  #   https://www.samba.org/samba/docs/current/man-html/smb.conf.5.html#MULTICASTDNSREGISTER
+  multicast_dns_register: "yes"
+  # mdns name not supported until samba 4.8 (Ubuntu 18.04 ships with 4.7)
+  #mdns_name: "{{ samba_mdns_hostname | default(ansible_hostname) }}"
+
+  disable_netbios: '{{ disable_netbios | default("no") }}'
 
   dfree_command: '{{ dfree_script | default("/usr/local/bin/dfree.sh") }}'
 

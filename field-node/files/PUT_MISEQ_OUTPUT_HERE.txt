@@ -1,5 +1,0 @@
-This directory, the top level of the samba share, should be set as the output folder for MiSeq runs.
-
-Once mounted, specify the output folder in the MiSeq settings as:
-
-\\{{ ansible_hostname }}\{{samba_username}}
