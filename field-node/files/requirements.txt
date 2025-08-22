@@ -4,3 +4,5 @@ requests==2.20.0
 urllib3
 psutil
 ipaddress
+requests
+google-auth

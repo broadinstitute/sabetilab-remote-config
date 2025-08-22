@@ -1,0 +1,5 @@
+#!/bin/bash
+
+SOURCE_DIR=$1
+
+PYTHONPATH= CLOUDSDK_PYTHON="/usr/bin/python3.6" /opt/field-node/incremental_illumina_upload_to_gs.sh "${SOURCE_DIR}" "{{ gs_upload_bucket }}" || echo "incremental upload to GS failed"
