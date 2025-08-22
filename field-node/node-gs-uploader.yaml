@@ -1,0 +1,122 @@
+- hosts: nodes
+
+  vars_prompt:
+    - name: "samba_username"
+      prompt: "Enter username of samba user to sync with DNAnexus and/or GS"
+      private: no
+
+  vars_files:
+    - "../settings_field_node.yml"
+  vars:
+    gs_upload_bucket: "{{ gs_upload_bucket }}"
+    post_upload_script: "/opt/field-node/move_old_subdirs_post_upload.sh"
+    seqdata_archival_path: "/media/seqdata"
+
+    monitored_users:
+      - username: "{{ samba_username }}"
+        monitored_directories:
+          - "/srv/samba/home/{{ samba_username }}"
+        script: "{{ post_upload_script }}" # script called after upload is complete, where call is: "<script specified>  <path/to/Run/directory>"
+        # n_upload_threads: 2
+        # n_retries: 8
+        # min_size: 500 # size needed to upload, in MB
+        # min_interval: 900 # sync check period, in seconds
+        # n_streaming_threads: 3
+        # downstream_input: |-
+        #   {{ downstream_input | to_json }}
+
+    #gs_upload_init_script: "/opt/field-node/initiate_incremental_illumina_upload_to_gs.sh"
+
+    # monitored_users:
+    #   - username: "{{ samba_username }}"
+    #     applet: "{{ applet }}" # sourced from group_vars/ or host_vars/
+    #     #workflow: "{{ workflow }}" # sourced from group_vars/ or host_vars/
+    #     monitored_directories:
+    #       - "/srv/samba/home/{{ samba_username }}"
+    #     script: "{{ post_upload_script }}" # script called after upload is complete, where call is: "<script specified>  <path/to/Run/directory>"
+    #     n_upload_threads: 2
+    #     n_retries: 8
+    #     min_size: 500 # size needed to upload, in MB
+    #     min_interval: 900 # sync check period, in seconds
+    #     n_streaming_threads: 3
+    #     downstream_input: |-
+    #       {{ downstream_input | to_json }}
+    # mode: deploy
+
+    # seqdata_archival_path: "/media/seqdata"
+
+  #roles: 
+  #  - dx-streaming-upload
+
+  tasks:
+    - name: Copy in GS service worker credentials
+      template: 
+        src: "../keys/{{ gs_service_worker_credential_json }}"
+        dest: "/home/{{ samba_username }}/{{ gs_service_worker_credential_json }}"
+        mode: "0600"
+        owner: "{{ samba_username }}"
+        group: "{{ samba_username }}"
+
+    # service account keyfile listed in settings_manager.yml
+    - name: Authenticate with GCP using service account keyfile listed in settings
+      shell: "runuser -u {{ samba_username }} -- gcloud auth activate-service-account --key-file /home/{{ samba_username }}/{{ gs_service_worker_credential_json }}"
+      # ToDo: switch users in a more Ansible-idiomatic way
+
+    # set gcloud project (add toggle for this, and prefer an overriding value present in the settings yml)
+    - name: Set gcloud project
+      shell: "runuser -u {{ samba_username }} -- gcloud config set project $(jq -c -r '.project_id' /home/{{ samba_username }}/{{ gs_service_worker_credential_json }})"
+      # ToDo: add flag to agree to any prompts displayed (if such a flag exists), 
+      #       since the uploading user may lack project-level view permissions
+
+    - name: Clone repo containing incremental upload scripts
+      ansible.builtin.git:
+        repo: https://github.com/broadinstitute/sequence-upload-to-gs.git
+        dest: /opt/sequence-upload-to-gs # dest is the full path of the git repo top level on the local machine, not the path to the dir containing it
+        version: master
+        #single_branch: yes
+        #depth: 1
+        
+    - name: Copy in data moving script (for post-upload archival)
+      template: 
+        src: "./files/move_old_subdirs_post_upload.sh.j2" 
+        dest: "{{ post_upload_script }}"
+        mode: "0777"
+        force: yes
+
+    # need to make executable: 
+    # /opt/field-node/sequence-upload-to-gs/incremental_illumina_upload_to_gs.sh
+    # /opt/field-node/sequence-upload-to-gs/monitor_runs.sh
+
+    # - name: Copy in incremental upload script
+    #   template: 
+    #     src: "./files/incremental_illumina_upload_to_gs.sh"
+    #     dest: "/opt/field-node/incremental_illumina_upload_to_gs.sh"
+    #     mode: "0755"
+
+    # - name: Copy in script to initiate incremental upload
+    #   template: 
+    #     src: "./files/initiate_incremental_illumina_upload_to_gs.sh.j2" 
+    #     dest: "{{ gs_upload_init_script }}"
+    #     mode: "0777"
+    #     force: yes
+
+
+    # Create lock file
+    - name: Create lock file for CRON to wait on using flock
+      file: path=/var/lock/gs_seq_uploader.lock state=touch
+
+    # Set up CRON job for monitoring
+    - name: set up CRON job to run every hour
+      cron: >
+        name="GS uploader sequencing run monitor"
+        user="{{ samba_username }}"
+        # job="@hourly flock -w 5 /var/lock/gs_seq_uploader.lock bash -ex -c '(PYTHONPATH= CLOUDSDK_PYTHON="/usr/bin/python3.6" /opt/sequence-upload-to-gs/monitor_runs.sh {{ item.1 }} {{ gs_upload_bucket }} {{ \'item.0.script\' if \'script\' in item.0 else \'\' }}) > ~/gs_upload_run_monitor.log 2>&1' > ~/gs_upload_stream_cron.log 2>&1"
+        job="@hourly flock -w 5 /var/lock/gs_seq_uploader.lock bash -ex -c '/opt/sequence-upload-to-gs/monitor_runs.sh {{ item.1 }} {{ gs_upload_bucket }} {{ \'item.0.script\' if \'script\' in item.0 else \'\' }}) > ~/gs_upload_run_monitor.log 2>&1' > ~/gs_upload_stream_cron.log 2>&1"
+      with_subelements:
+        - "{{ monitored_users }}"
+        - monitored_directories
+      become: yes
+      become_user: "{{ item.0.username }}"
+      when: mode == "debug"
+
+    - debug: msg="Configured GS uploader"

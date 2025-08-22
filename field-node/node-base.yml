@@ -77,10 +77,26 @@
     - name: Install curl
       apt: pkg=curl state=present
 
+    - name: Install jq
+      apt: pkg=jq state=present
+
+    # https://cloud.google.com/sdk/docs/install#deb
+    # to compare version number use:
+    # if dpkg --compare-versions "$(lsb_release -rs)" ge "18.04"; then ; else ; fi
     - name: Add google-cloud-sdk repository
       shell: |
-       grep "cloud.google.gpg" || echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
-       curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
+        if dpkg --compare-versions "$(lsb_release -rs)" ge "18.04"; then
+          (apt-key add --help | grep '--dearmor') && curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg --dearmor -o /usr/share/keyrings/cloud.google.gpg
+          echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
+        else
+          # for Ubuntu <18.04
+          # grep "cloud.google.gpg" || echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
+          grep "cloud.google.gpg" || echo "deb https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
+          (apt-key add --help | grep '--dearmor') || curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
+
+          # if the above fails, try this instead:
+          (apt-key add --help | grep -E '(--keyring|--dearmor)') || curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+        fi
 
     - name: "apt-get update"
       apt: update_cache=yes
