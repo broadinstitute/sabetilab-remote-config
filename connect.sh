@@ -19,7 +19,6 @@ if [[ -f "$SCRIPT_DIRECTORY/settings_field_node.yml" ]]; then
 
     # append the relay domain if only the node name is given
     if [[ ! -z "$RELAY_DOMAIN" ]] && [[ -z "$(echo $1 | grep ${RELAY_DOMAIN})" ]]; then
-        echo "foo"
         NODE_DOMAIN="$NODE_DOMAIN.$RELAY_DOMAIN"
     fi
 else
